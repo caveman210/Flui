@@ -17,6 +17,7 @@ Item {
     // Bar layout shows the control-center pill here, at the right
     // edge.
     property bool showControlPill: true
+    readonly property bool hasMedia: MediaService.hasPlayer
     readonly property bool hasTray: SystemTray.items && SystemTray.items.values.length > 0
     implicitWidth: row.implicitWidth
     implicitHeight: row.implicitHeight
@@ -79,6 +80,8 @@ Item {
                 font.pixelSize: 14
             }
         }
+
+
 
         PrivacyCluster {
             id: privacy

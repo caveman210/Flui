@@ -8,6 +8,8 @@ import Quickshell.Services.SystemTray
 import "../../styles"
 import "../../core"
 import "../../island"
+import "../../services"
+import "../../components/bar"
 
 FocusScope {
     id: root
@@ -16,6 +18,7 @@ FocusScope {
     readonly property int itemCount: items.length
     readonly property int cols: Math.min(4, Math.max(1, itemCount))
     readonly property int rows: Math.max(1, Math.ceil(itemCount / cols))
+    readonly property bool hasMedia: MediaService.hasPlayer
 
     // Drill-in menu state
     property var activeMenuHandle: null
@@ -47,14 +50,20 @@ FocusScope {
     }
     readonly property int menuListHeight: Math.min(menuContentHeight, maxListHeight)
 
-    // Sizing: snug fit around icons with 8px gap and 12px margins
+    // Tray grid metrics
+    readonly property int gridContentWidth: itemCount > 0 ? (cols * 24 + (cols - 1) * 8) : 60
+    readonly property int gridContentHeight: itemCount > 0 ? (rows * 24 + (rows - 1) * 8) : 24
+
+    // Sizing: snug fit around huddled icons + notification section when media is active
     implicitWidth: activeMenuHandle !== null
         ? 230
-        : (itemCount === 0 ? 140 : cols * 24 + (cols - 1) * 8 + 24)
+        : (root.hasMedia
+            ? (gridContentWidth + 16 + 1 + 16 + 24 + 24)
+            : (itemCount === 0 ? 140 : cols * 24 + (cols - 1) * 8 + 24))
 
     implicitHeight: activeMenuHandle !== null
         ? (menuHeader.implicitHeight + menuListHeight + 24)
-        : (itemCount === 0 ? 36 : rows * 24 + (rows - 1) * 8 + 18)
+        : (Math.max(gridContentHeight, root.hasMedia ? 28 : 24) + 18)
 
     Behavior on implicitWidth {
         NumberAnimation { duration: Theme.animationFast; easing.type: Theme.animationHorizontal }
@@ -149,81 +158,115 @@ FocusScope {
     }
 
     // =========================================================================
-    // VIEW 1: HUDDLED ICONS (Raw icons huddled together, max 4 per row)
+    // VIEW 1: HUDDLED ICONS + NOTIFICATIONS SECTION (Separated by '|')
     // =========================================================================
     Item {
         id: iconsContainer
         visible: root.activeMenuHandle === null
         anchors.fill: parent
 
-        GridLayout {
-            id: iconGrid
+        RowLayout {
             anchors.centerIn: parent
-            columns: root.cols
-            rowSpacing: 8
-            columnSpacing: 8
+            spacing: 12
 
-            Repeater {
-                model: root.items
+            // Systray Icons Grid: max 4 per row, expands downwards
+            Item {
+                implicitWidth: root.gridContentWidth
+                implicitHeight: root.gridContentHeight
+                Layout.alignment: Qt.AlignVCenter
 
-                Item {
-                    id: iconTile
-                    required property var modelData
-                    readonly property var trayItem: modelData
+                GridLayout {
+                    id: iconGrid
+                    anchors.centerIn: parent
+                    columns: root.cols
+                    rowSpacing: 8
+                    columnSpacing: 8
 
-                    width: 24
-                    height: 24
+                    Repeater {
+                        model: root.items
 
-                    IconImage {
-                        anchors.centerIn: parent
-                        implicitSize: 20
-                        opacity: tileHover.hovered ? 1.0 : 0.8
-                        source: root.iconSource(iconTile.trayItem ? iconTile.trayItem.icon : "")
+                        Item {
+                            id: iconTile
+                            required property var modelData
+                            readonly property var trayItem: modelData
 
-                        Behavior on opacity {
-                            NumberAnimation { duration: Theme.animationFast }
-                        }
-                    }
+                            width: 24
+                            height: 24
 
-                    HoverHandler {
-                        id: tileHover
-                        cursorShape: Qt.PointingHandCursor
-                    }
+                            IconImage {
+                                anchors.centerIn: parent
+                                implicitSize: 20
+                                opacity: tileHover.hovered ? 1.0 : 0.8
+                                source: root.iconSource(iconTile.trayItem ? iconTile.trayItem.icon : "")
 
-                    // Left click: activate (or open menu if menu-only)
-                    TapHandler {
-                        acceptedButtons: Qt.LeftButton
-                        onTapped: {
-                            if (!iconTile.trayItem) return
-                            if (iconTile.trayItem.onlyMenu) {
-                                root.openMenuForItem(iconTile.trayItem)
-                            } else {
-                                iconTile.trayItem.activate()
-                                IslandController.reset()
+                                Behavior on opacity {
+                                    NumberAnimation { duration: Theme.animationFast }
+                                }
                             }
-                        }
-                    }
 
-                    // Right click: drill-in menu subview
-                    TapHandler {
-                        acceptedButtons: Qt.RightButton
-                        onTapped: {
-                            if (iconTile.trayItem && iconTile.trayItem.hasMenu) {
-                                root.openMenuForItem(iconTile.trayItem)
+                            HoverHandler {
+                                id: tileHover
+                                cursorShape: Qt.PointingHandCursor
+                            }
+
+                            // Left click: activate (or open menu if menu-only)
+                            TapHandler {
+                                acceptedButtons: Qt.LeftButton
+                                onTapped: {
+                                    if (!iconTile.trayItem) return
+                                    if (iconTile.trayItem.onlyMenu) {
+                                        root.openMenuForItem(iconTile.trayItem)
+                                    } else {
+                                        iconTile.trayItem.activate()
+                                        IslandController.reset()
+                                    }
+                                }
+                            }
+
+                            // Right click: drill-in menu subview
+                            TapHandler {
+                                acceptedButtons: Qt.RightButton
+                                onTapped: {
+                                    if (iconTile.trayItem && iconTile.trayItem.hasMenu) {
+                                        root.openMenuForItem(iconTile.trayItem)
+                                    }
+                                }
                             }
                         }
                     }
                 }
-            }
-        }
 
-        // Empty state
-        Text {
-            visible: root.itemCount === 0
-            anchors.centerIn: parent
-            text: "No tray apps"
-            color: Theme.textMuted
-            font.pixelSize: 11
+                // Empty tray state
+                Text {
+                    visible: root.itemCount === 0
+                    anchors.centerIn: parent
+                    text: "No apps"
+                    color: Theme.textMuted
+                    font.pixelSize: 11
+                }
+            }
+
+            // Separator '|' between systray and notification section
+            Text {
+                visible: root.hasMedia
+                text: "|"
+                color: Theme.border
+                font.pixelSize: 14
+                opacity: 0.6
+                Layout.alignment: Qt.AlignVCenter
+            }
+
+            // Notification section: centered in its dedicated region
+            Item {
+                visible: root.hasMedia
+                implicitWidth: 28
+                implicitHeight: 28
+                Layout.alignment: Qt.AlignVCenter
+
+                NotificationBell {
+                    anchors.centerIn: parent
+                }
+            }
         }
     }
 

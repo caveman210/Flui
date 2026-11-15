@@ -3,22 +3,16 @@ import QtQuick.Layouts
 
 import "../../components/sections"
 import "../../services"
+import "../../styles"
+import "../../core"
 
 Item {
     id: root
 
-    // The privacy cluster adds a third control to the right of the
-    // states pill, so the bar grew from 520 to 560 to keep the centre
-    // from being squeezed.
-    //
-    // Both side columns MUST be the same width: the clock sits at the
-    // midpoint of whatever is left between them, so any difference
-    // between the left and right columns drags the clock off the
-    // capsule's true centre. Keeping one shared value makes that
-    // impossible to break by accident.
     readonly property int totalWidth: 560
     readonly property int sideWidth: 172
     readonly property int gutter: 28
+    readonly property bool hasMedia: MediaService.hasPlayer
 
     implicitWidth: totalWidth
     implicitHeight: 75
@@ -29,11 +23,69 @@ Item {
         anchors.rightMargin: 14
         spacing: 0
 
-        LeftSection {
+        // Left Section: Media info when playing, otherwise standard LeftSection
+        Item {
             Layout.preferredWidth: root.sideWidth
-            Layout.alignment: Qt.AlignVCenter
+            Layout.fillHeight: true
+
+            // When no media is playing, keep standard LeftSection (weather/notifications/etc.)
+            LeftSection {
+                visible: !root.hasMedia
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                width: root.sideWidth
+            }
+
+            // When media is playing: Cava on left, Song Title & Artist on right (no thumbnail, clean padding)
+            RowLayout {
+                id: mediaRow
+                visible: root.hasMedia
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 10
+
+                Cava {
+                    id: cavaModule
+                    dotBaseline: true
+                    Layout.alignment: Qt.AlignVCenter
+                }
+
+                Column {
+                    id: textCol
+                    spacing: 3
+                    Layout.alignment: Qt.AlignVCenter
+
+                    ScrollingText {
+                        text: MediaService.title || "No Title"
+                        maxWidth: 125
+                        fontSize: 13
+                        hovered: mediaHover.hovered
+                    }
+
+                    ScrollingText {
+                        text: MediaService.artist || "Unknown Artist"
+                        maxWidth: 125
+                        fontSize: 11
+                        hovered: mediaHover.hovered
+                        opacity: 0.7
+                    }
+                }
+            }
+
+            HoverHandler {
+                id: mediaHover
+                enabled: root.hasMedia
+                cursorShape: Qt.PointingHandCursor
+            }
+
+            TapHandler {
+                enabled: root.hasMedia
+                acceptedButtons: Qt.LeftButton
+                onTapped: IslandController.openMediaFromLeftSection()
+            }
         }
 
+        // Center Section: Clock and Calendar Date
         Item {
             Layout.preferredWidth: root.totalWidth - root.sideWidth * 2 - root.gutter
             Layout.fillHeight: true
@@ -44,6 +96,7 @@ Item {
             }
         }
 
+        // Right Section: Control toggles, tray, etc.
         RightSection {
             Layout.preferredWidth: root.sideWidth
             Layout.alignment: Qt.AlignVCenter

@@ -43,7 +43,7 @@ Item {
 
         NotificationBell {
             id: notifBell
-            visible: !IslandState.layoutIsBar
+            visible: !IslandState.layoutIsBar && !root.hasMedia
             Layout.alignment: Qt.AlignVCenter
             HoverHandler {
                 id: bellHover
