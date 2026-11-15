@@ -1,6 +1,7 @@
 pragma Singleton
 
 import QtQuick
+import "../config"
 
 QtObject {
     // =========================================================
@@ -24,6 +25,8 @@ QtObject {
     readonly property int settingsMode: 14
     readonly property int weatherMode: 15
     readonly property int nightLightMode: 16
+    readonly property int weatherSettingsMode: 17
+    readonly property int trayMode: 18
 
     // =========================================================
     // LAYOUT
@@ -33,8 +36,18 @@ QtObject {
     readonly property int layoutNotch: 1
     readonly property int layoutBar: 2
 
-    // Pill is the default layout
-    property int layout: layoutPill
+    // Pill is the default layout (persisted across sessions)
+    property int layout: ConfigStore.layout
+
+    onLayoutChanged: {
+        trayItemMenu = null
+        trayOverflowOpen = false
+        trayDropdownOpen = false
+        if (ConfigStore.layout !== layout) {
+            ConfigStore.layout = layout
+            ConfigStore.save()
+        }
+    }
 
     readonly property bool layoutIsBar: layout === layoutBar
 
@@ -86,11 +99,7 @@ QtObject {
         }
     }
 
-    onLayoutChanged: {
-        trayItemMenu = null
-        trayOverflowOpen = false
-        trayDropdownOpen = false
-    }
+
 
     // Centered card in the wallpaper carousel, kept across opens.
     property int wallpaperSelection: 0
@@ -116,7 +125,9 @@ QtObject {
         mode === calendarMode ||
         mode === settingsMode ||
         mode === weatherMode ||
-        mode === nightLightMode
+        mode === nightLightMode ||
+        mode === weatherSettingsMode ||
+        mode === trayMode
 
     // Bar layout: a view drops down below the bar in the panel slot.
     readonly property bool barPanelOpen: layoutIsBar && mode !== defaultMode

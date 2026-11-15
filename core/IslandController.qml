@@ -73,6 +73,10 @@ QtObject {
         IslandState.mode = IslandState.nightLightMode
     }
 
+    function openWeatherSettings() {
+        IslandState.mode = IslandState.weatherSettingsMode
+    }
+
     function openSystemMenu() {
         IslandState.mode =
             IslandState.systemMenuMode
@@ -146,24 +150,29 @@ QtObject {
     }
 
     // =========================================================
-    // TRAY (bar layout)
+    // TRAY (SubView)
     // =========================================================
 
-    function openTrayOverflow(anchorX) {
-        closeTrayItemMenu()
-        IslandState.trayOverflowOpen = true
-        IslandState.trayItemMenuAnchorX = anchorX || 0
-        IslandState.returnToExpanded = false
+    function openTray() {
+        IslandState.returnToExpanded = IslandState.islandPinned
         IslandState.islandPinned = false
-        IslandState.mode = IslandState.defaultMode
+        IslandState.mode = IslandState.trayMode
+    }
+
+    function toggleTray() {
+        if (IslandState.mode === IslandState.trayMode) {
+            reset()
+        } else {
+            openTray()
+        }
+    }
+
+    function openTrayOverflow(anchorX) {
+        openTray()
     }
 
     function toggleTrayOverflow(anchorX) {
-        if (IslandState.trayOverflowOpen || IslandState.trayItemMenu !== null) {
-            closeTrayItemMenu()
-        } else {
-            openTrayOverflow(anchorX)
-        }
+        toggleTray()
     }
     // handle is normalized to the root menu item, which is what
     // QsMenuOpener consumes directly. anchorX is the icon's center in

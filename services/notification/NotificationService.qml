@@ -6,6 +6,7 @@ import Quickshell.Io
 import Quickshell.Services.Notifications
 
 import "../../core"
+import "../../config"
 import ".."
 import "../notification/NotifUtils.js" as NotifUtils
 import "../notification"
@@ -28,7 +29,21 @@ Singleton {
     readonly property alias revision: model.revision
 
     property int unreadCount: 0
-    property bool dnd: false
+    property bool dnd: ConfigStore.dnd
+
+    onDndChanged: {
+        if (ConfigStore.dnd !== dnd) {
+            ConfigStore.dnd = dnd
+            ConfigStore.save()
+        }
+    }
+
+    Connections {
+        target: ConfigStore
+        function onDndChanged() {
+            root.dnd = ConfigStore.dnd
+        }
+    }
 
     // The pane only ever shows the current local day. `viewDay`
     // lets the rollover timer notice midnight without re-reading the

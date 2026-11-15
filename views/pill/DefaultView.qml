@@ -26,12 +26,10 @@ Item {
     readonly property bool batteryActive: LowBatteryService.active
 
     // Precedence rule for secondary bubble: music (0) < privacy cluster (1) < low battery (2)
-    // 1. If Low Battery is active and either privacy or music is active:
-    //    Low Battery goes to the secondary bubble.
-    //    If privacy is also active, privacy takes the primary pill (hiding music).
-    // 2. Else if Privacy is active and Music is active:
-    //    Privacy goes to the secondary bubble; music stays in the primary pill.
-    readonly property bool bubbleShowsBattery: batteryActive && (privacyLive || hasMedia)
+    // 1. Whenever Low Battery is active, it is in the secondary bubble.
+    // 2. If music and privacy are together (without low battery), privacy is in the secondary bubble.
+    // 3. If all three together, privacy is in primary pill and low battery in secondary bubble.
+    readonly property bool bubbleShowsBattery: batteryActive
     readonly property bool bubbleShowsPrivacy: !bubbleShowsBattery && (privacyLive && hasMedia)
     readonly property bool isSplitMode: bubbleShowsBattery || bubbleShowsPrivacy
 
@@ -132,7 +130,7 @@ Item {
             }
 
             // -----------------------------------------------------
-            // CENTER REGION: Clock (+ Low Battery indicator)
+            // CENTER REGION: Clock
             // -----------------------------------------------------
             RowLayout {
                 id: row
@@ -140,11 +138,6 @@ Item {
                 anchors.centerIn: parent
 
                 ClockView {
-                    Layout.alignment: Qt.AlignVCenter
-                }
-
-                LowBatteryIndicator {
-                    visible: LowBatteryService.active && !root.bubbleShowsBattery
                     Layout.alignment: Qt.AlignVCenter
                 }
             }
@@ -197,6 +190,7 @@ Item {
 
         HoverHandler {
             id: bubbleHoverHandler
+            cursorShape: Qt.PointingHandCursor
         }
 
         // Privacy indicator row (visible when privacy owns the bubble)
@@ -261,8 +255,14 @@ Item {
 
         TapHandler {
             acceptedButtons: Qt.LeftButton
-            enabled: root.bubbleShowsPrivacy
-            onTapped: IslandController.openPrivacyMenuFromRightSection()
+            enabled: root.bubbleShowsPrivacy || root.bubbleShowsBattery
+            onTapped: {
+                if (root.bubbleShowsPrivacy) {
+                    IslandController.openPrivacyMenuFromRightSection()
+                } else if (root.bubbleShowsBattery) {
+                    IslandController.openControlCenterFromRightSection()
+                }
+            }
         }
     }
 }

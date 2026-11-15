@@ -11,23 +11,33 @@ import "../../island"
 import "../compositor/hyprland"
 import "../appearance"
 import "../compositor"
+import "../../config"
 
 Singleton {
     id: root
 
     // =========================================================
     // SETTING
-    // In-memory only (like FocusService) — resets on reload.
+    // Persisted across sessions in settings.json.
     // =========================================================
 
-    property bool enabled: false
+    property bool enabled: ConfigStore.autoHideBar
     property string subtitle: enabled ? "On" : "Off"
     property string icon: enabled
         ? "󰈈"
         : "󰈉"
 
+    Connections {
+        target: ConfigStore
+        function onAutoHideBarChanged() {
+            root.enabled = ConfigStore.autoHideBar
+        }
+    }
+
     function toggle() {
         enabled = !enabled
+        ConfigStore.autoHideBar = enabled
+        ConfigStore.save()
     }
 
     // =========================================================
@@ -264,7 +274,7 @@ Singleton {
 
     FileView {
         id: behaviorFile
-        path: Quickshell.env("HOME") + "/.config/quickshell/assets/app-behavior.json"
+        path: "assets/app-behavior.json"
         watchChanges: true
 
         // watchChanges only emits fileChanged; reload() is what

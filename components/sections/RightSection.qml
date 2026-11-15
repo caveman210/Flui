@@ -67,14 +67,13 @@ Item {
                 gesturePolicy: TapHandler.ReleaseWithinBounds
                 onTapped: function(event) {
                     event.accepted = true
-                    var p = trayChevronButton.mapToItem(null, trayChevronButton.width / 2, 0)
-                    IslandController.toggleTrayOverflow(p.x)
+                    IslandController.toggleTray()
                 }
             }
 
             Text {
                 anchors.centerIn: parent
-                text: IslandState.barTrayOpen ? "󰅃" : "󰅀"
+                text: IslandState.mode === IslandState.trayMode ? "󰅃" : "󰅀"
                 color: chevronHover.hovered ? Theme.iconActive : Theme.icon
                 font.family: Theme.iconFont
                 font.pixelSize: 14

@@ -17,6 +17,7 @@ import "../../services/power"
 import "../../services/shell"
 import "../../services/system"
 import "../../island"
+import "../../config"
 
 FocusScope {
     id: root

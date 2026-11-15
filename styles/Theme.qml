@@ -2,16 +2,23 @@ pragma Singleton
 
 import QtQuick
 
+// =========================================================
+// DEFAULT THEME (Muted, warm neutral dynamic island fallback)
+// Relaxed dark obsidian aesthetic: soft zinc/slate neutrals,
+// subtle warm borders, low eye-strain accents.
+// ONLY active if Matugen is not available.
+// =========================================================
+
 QtObject {
     // =========================================================
     // COLORS
     // =========================================================
 
     // Backgrounds
-    property color background: "#000000"
-    property color surface: "#1A1A1A"
-    property color surfaceVariant: "#303030"
-    property color card: "#202020"
+    property color background: "#09090B"
+    property color surface: "#141416"
+    property color surfaceVariant: "#1E1E22"
+    property color card: "#18181B"
 
     // Overlays
     property color overlayLight: "#00000022"
@@ -19,44 +26,44 @@ QtObject {
     property color overlayStrong: "#00000066"
 
     // Text
-    property color textPrimary: "#E5E7EB"
-    property color textSecondary: "#9CA3AF"
-    property color textMuted: "#6B7280"
+    property color textPrimary: "#F4F4F5"
+    property color textSecondary: "#A1A1AA"
+    property color textMuted: "#71717A"
 
     // Icons
-    property color icon: "#9CA3AF"
-    property color iconActive: "#E5E7EB"
-    property color iconDisabled: "#6B7280"
+    property color icon: "#A1A1AA"
+    property color iconActive: "#F4F4F5"
+    property color iconDisabled: "#52525B"
 
-    // Accent
-    property color accent: "#E5E7EB"
-    property color accentHover: "#F3F4F6"
-    property color accentPressed: "#D1D5DB"
+    // Accent (Soft neutral silver/slate)
+    property color accent: "#E4E4E7"
+    property color accentHover: "#FFFFFF"
+    property color accentPressed: "#D4D4D8"
 
     // Borders
-    property color border: "#404040"
-    property color borderHover: "#606060"
+    property color border: "#27272A"
+    property color borderHover: "#3F3F46"
     property color borderSelected: accent
-    property color borderSubtle: "#00000020"
+    property color borderSubtle: "#FFFFFF12"
 
     // Buttons
-    property color buttonBackground: "#202020"
-    property color buttonHover: "#2A2A2A"
-    property color buttonPressed: "#404040"
+    property color buttonBackground: "#18181B"
+    property color buttonHover: "#27272A"
+    property color buttonPressed: "#3F3F46"
     property color buttonSelected: accent
     property color buttonText: textPrimary
-    property color controlButtonHover: "#404040"
+    property color controlButtonHover: "#27272A"
 
-    // Status / semantic colors
-    property color danger: "#EF4444"
-    property color dangerHover: "#DC2626"
-    property color warning: "#F59E0B"
-    property color success: "#22C55E"
+    // Status / semantic colors (Calm, desaturated tones)
+    property color danger: "#F87171"
+    property color dangerHover: "#EF4444"
+    property color warning: "#FBBF24"
+    property color success: "#4ADE80"
 
     // Inputs / sliders
-    property color sliderBackground: "#303030"
+    property color sliderBackground: "#27272A"
     property color sliderFill: accent
-    property color inputBackground: "#202020"
+    property color inputBackground: "#141416"
     property color inputBorder: border
 
     // Notifications
@@ -65,7 +72,7 @@ QtObject {
 
     // Media
     property color progress: accent
-    property color progressBackground: "#404040"
+    property color progressBackground: "#27272A"
 
     // Wallpaper selector
     property color wallpaperOverlay: overlayStrong
@@ -80,18 +87,12 @@ QtObject {
     // =========================================================
 
     property string iconFont: "JetBrainsMono Nerd Font"
-
-    // The non-Mono Nerd Font renders PUA glyphs with proportional
-    // advances, so fixed-size icon slots need the Mono variant where
-    // every glyph advances the same. Not part of the per-theme
-    // property set: constant across all themes.
     readonly property string iconFontMono: "JetBrainsMono Nerd Font Mono"
 
     // =========================================================
     // LAYOUT & SIZING
     // =========================================================
 
-    // General
     readonly property int outerPadding: 16
     readonly property int capsulePadding: 14
     readonly property int sectionGap: 0
@@ -115,8 +116,6 @@ QtObject {
     readonly property int statusVolumeWidth: 280
     readonly property int statusBrightnessWidth: 280
     readonly property int statusNotificationWidth: 280
-    // Max width for auto-sized device prompts ("device" mode).
-    // OverlayView fits the full text up to this cap, then elides.
     readonly property int statusDeviceMaxWidth: 460
 
     // =========================================================

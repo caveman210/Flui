@@ -76,7 +76,8 @@ Rectangle {
         && (IslandState.mode === IslandState.privacyMenuMode
             || IslandState.mode === IslandState.controlCenterMode
             || IslandState.mode === IslandState.wifiMenuMode
-            || IslandState.mode === IslandState.bluetoothMenuMode)
+            || IslandState.mode === IslandState.bluetoothMenuMode
+            || IslandState.mode === IslandState.trayMode)
     readonly property real panelX: !barLayout
         ? 0
         : panelWeather

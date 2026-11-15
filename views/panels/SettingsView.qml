@@ -231,7 +231,56 @@ FocusScope {
                 // Divider line
                 Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
 
-                // 4. Night Light Section Link / Quick Toggle
+                // 4. Weather Provider & Location Section Link
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+
+                    Text { text: "󰖐"; font.family: Theme.iconFont; font.pixelSize: 16; color: Theme.accent }
+
+                    Column {
+                        Layout.fillWidth: true
+                        spacing: 1
+
+                        Text {
+                            text: "Weather & Providers"
+                            color: Theme.textPrimary
+                            font.pixelSize: 13
+                        }
+
+                        Text {
+                            text: WeatherService.providerName + (ConfigStore.weatherLocation ? " • " + ConfigStore.weatherLocation : " • Auto IP")
+                            color: Theme.textMuted
+                            font.pixelSize: 11
+                            elide: Text.ElideRight
+                        }
+                    }
+
+                    Rectangle {
+                        width: 28
+                        height: 28
+                        radius: 14
+                        color: weatherGearHover.hovered ? Theme.buttonHover : Theme.surface
+                        border.width: 1
+                        border.color: Theme.border
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "󰅂"
+                            color: Theme.accent
+                            font.family: Theme.iconFont
+                            font.pixelSize: 14
+                        }
+
+                        HoverHandler { id: weatherGearHover; cursorShape: Qt.PointingHandCursor }
+                        TapHandler { onTapped: IslandController.openWeatherSettings() }
+                    }
+                }
+
+                // Divider line
+                Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
+
+                // 5. Night Light Section Link / Quick Toggle
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 10
@@ -275,46 +324,6 @@ FocusScope {
 
                         HoverHandler { id: nlGearHover; cursorShape: Qt.PointingHandCursor }
                         TapHandler { onTapped: IslandController.openNightLight() }
-                    }
-                }
-            }
-        }
-
-        // Manual Weather Location Override Input
-        Rectangle {
-            Layout.fillWidth: true
-            implicitHeight: 44
-            radius: 10
-            color: Theme.surface
-            border.width: 1
-            border.color: Theme.border
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.margins: 10
-                spacing: 8
-
-                Text { text: "󰍎"; font.family: Theme.iconFont; font.pixelSize: 15; color: Theme.accent }
-
-                TextInput {
-                    id: locInput
-                    Layout.fillWidth: true
-                    text: ConfigStore.weatherLocation
-                    color: Theme.textPrimary
-                    font.pixelSize: 12
-                    selectByMouse: true
-                    clip: true
-
-                    Text {
-                        text: "Override City (e.g. London, Delhi)"
-                        color: Theme.textMuted
-                        font.pixelSize: 12
-                        visible: locInput.text === "" && !locInput.activeFocus
-                    }
-
-                    onEditingFinished: {
-                        ConfigStore.weatherLocation = locInput.text.trim()
-                        ConfigStore.save()
                     }
                 }
             }

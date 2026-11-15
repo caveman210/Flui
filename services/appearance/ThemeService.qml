@@ -51,13 +51,15 @@ Singleton {
         }
     }
 
+    readonly property string themesDir: "styles/themes"
+    readonly property string matugenThemePath: "styles/themes/matugen/Theme.qml"
+
     Process {
         id: themeLister
         command: [
             "bash",
             "-c",
-            "find \"" + Quickshell.env("HOME")
-                + "/.config/quickshell/styles/themes\" -mindepth 1 -maxdepth 1 -type d -printf '%f\\n' | sort"
+            "find \"" + root.themesDir + "\" -mindepth 1 -maxdepth 1 -type d -printf '%f\\n' | sort"
         ]
 
         stdout: StdioCollector {
@@ -210,7 +212,7 @@ Singleton {
 
         process.command = [
             "bash",
-            Quickshell.env("HOME") + "/.config/quickshell/scripts/theme.sh",
+            "scripts/theme.sh",
             themeName
         ]
 
@@ -294,7 +296,7 @@ Singleton {
         command: [
             "bash",
             "-c",
-            "cat " + Quickshell.env("HOME") + "/.config/quickshell/.current_theme"
+            "cat .current_theme 2>/dev/null || true"
         ]
 
         stdout: StdioCollector {
@@ -321,7 +323,7 @@ Singleton {
 
     FileView {
         id: matugenColorsFile
-        path: Quickshell.env("HOME") + "/.config/quickshell/colors/MatugenColors.qml"
+        path: root.matugenThemePath
         watchChanges: true
 
         onFileChanged: {
@@ -338,7 +340,7 @@ Singleton {
         command: [
             "bash",
             "-c",
-            "cat " + Quickshell.env("HOME") + "/.config/quickshell/colors/MatugenColors.qml"
+            "cat \"" + root.matugenThemePath + "\""
         ]
 
         stdout: StdioCollector {

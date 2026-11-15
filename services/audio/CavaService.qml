@@ -38,7 +38,7 @@ Singleton {
         command: [
             "cava",
             "-p",
-            Quickshell.env("HOME") + "/.config/quickshell/scripts/cava.conf"
+            "scripts/cava.conf"
         ]
 
         stdout: SplitParser {

@@ -6,10 +6,11 @@ import Quickshell
 import "../../core"
 import "../../styles"
 import "../../services"
+import "../../island"
 
 FocusScope {
     id: root
-    implicitWidth: 320
+    implicitWidth: 350
     implicitHeight: layout.implicitHeight + 36
 
     Component.onCompleted: forceActiveFocus()
@@ -21,56 +22,120 @@ FocusScope {
         }
     }
 
+    readonly property bool hasError: WeatherService.errorMessage !== ""
+    readonly property bool isLoading: WeatherService.loading
+
     ColumnLayout {
         id: layout
         anchors.fill: parent
         anchors.margins: 18
-        spacing: 14
+        spacing: 12
 
-        // Header: Location & Refresh
+        // Top Header: Location, Condition Summary & Actions (No provider name shown)
         RowLayout {
             Layout.fillWidth: true
             spacing: 8
 
             Text {
                 text: "󰖐"
-                color: Theme.accent
+                color: root.hasError ? Theme.textMuted : Theme.accent
                 font.family: Theme.iconFont
                 font.pixelSize: 18
+                Layout.alignment: Qt.AlignVCenter
+
+                Behavior on color {
+                    ColorAnimation { duration: Theme.animationNormal }
+                }
             }
 
-            Text {
-                text: WeatherService.city !== "" ? WeatherService.city : "Weather"
-                color: Theme.textPrimary
-                font.pixelSize: 15
-                font.bold: true
-                elide: Text.ElideRight
+            ColumnLayout {
+                spacing: 1
                 Layout.fillWidth: true
+
+                Text {
+                    text: WeatherService.city !== "" ? WeatherService.city : "Local Weather"
+                    color: Theme.textPrimary
+                    font.pixelSize: 15
+                    font.bold: true
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                }
+
+                Text {
+                    text: root.isLoading
+                        ? "Updating weather data..."
+                        : (root.hasError
+                            ? "Connection failed • Tap to retry"
+                            : (WeatherService.condition + (WeatherService.tempHigh !== "--" ? (" • H: " + WeatherService.tempHigh + "  L: " + WeatherService.tempLow) : "")))
+                    color: root.hasError ? Theme.danger : (root.isLoading ? Theme.accent : Theme.textMuted)
+                    font.pixelSize: 10
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+
+                    Behavior on color {
+                        ColorAnimation { duration: Theme.animationNormal }
+                    }
+                }
             }
 
+            // Weather Settings Shortcut Button
             Rectangle {
-                width: 26
-                height: 26
-                radius: 13
-                color: Theme.surface
+                width: 28
+                height: 28
+                radius: 14
+                color: setHover.hovered ? Theme.buttonHover : Theme.surface
+                border.width: 1
+                border.color: Theme.border
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "󰒓"
+                    color: Theme.accent
+                    font.family: Theme.iconFont
+                    font.pixelSize: 13
+                }
+
+                HoverHandler { id: setHover; cursorShape: Qt.PointingHandCursor }
+                TapHandler { onTapped: IslandController.openWeatherSettings() }
+            }
+
+            // Refresh Button (No rotation, gentle pulse while loading)
+            Rectangle {
+                width: 28
+                height: 28
+                radius: 14
+                color: refHover.hovered ? Theme.buttonHover : Theme.surface
+                border.width: 1
+                border.color: Theme.border
 
                 Text {
                     anchors.centerIn: parent
                     text: ""
-                    color: Theme.textSecondary
+                    color: root.hasError ? Theme.textMuted : (root.isLoading ? Theme.accent : Theme.textSecondary)
                     font.family: Theme.iconFont
-                    font.pixelSize: 12
+                    font.pixelSize: 13
+
+                    SequentialAnimation on opacity {
+                        running: root.isLoading
+                        loops: Animation.Infinite
+                        NumberAnimation { to: 0.35; duration: 600; easing.type: Easing.InOutQuad }
+                        NumberAnimation { to: 1.0; duration: 600; easing.type: Easing.InOutQuad }
+                    }
+
+                    Behavior on color {
+                        ColorAnimation { duration: Theme.animationNormal }
+                    }
                 }
 
-                HoverHandler { cursorShape: Qt.PointingHandCursor }
+                HoverHandler { id: refHover; cursorShape: Qt.PointingHandCursor }
                 TapHandler { onTapped: WeatherService.refresh() }
             }
         }
 
-        // Current Main Tile
+        // Current Main Weather Card
         Rectangle {
             Layout.fillWidth: true
-            implicitHeight: 80
+            implicitHeight: 96
             radius: 16
             color: Theme.surface
             border.width: 1
@@ -81,42 +146,100 @@ FocusScope {
                 anchors.margins: 16
                 spacing: 16
 
-                Text {
-                    text: WeatherService.icon
-                    color: Theme.accent
-                    font.family: Theme.iconFont
-                    font.pixelSize: 40
+                // Weather Icon: Pulses while loading, turns grey on error, front color on success
+                Item {
+                    width: 52
+                    height: 52
+                    Layout.alignment: Qt.AlignVCenter
+
+                    Text {
+                        id: weatherIcon
+                        anchors.centerIn: parent
+                        text: WeatherService.icon
+                        color: root.hasError ? Theme.textMuted : Theme.accent
+                        font.family: Theme.iconFont
+                        font.pixelSize: 48
+
+                        SequentialAnimation on opacity {
+                            running: root.isLoading
+                            loops: Animation.Infinite
+                            NumberAnimation { to: 0.35; duration: 700; easing.type: Easing.InOutQuad }
+                            NumberAnimation { to: 1.0; duration: 700; easing.type: Easing.InOutQuad }
+                        }
+
+                        Behavior on color {
+                            ColorAnimation { duration: Theme.animationNormal }
+                        }
+                    }
                 }
 
                 ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 2
+                    spacing: 3
+                    Layout.alignment: Qt.AlignVCenter
 
-                    Text {
-                        text: WeatherService.temp
-                        color: Theme.textPrimary
-                        font.pixelSize: 22
-                        font.bold: true
+                    RowLayout {
+                        spacing: 8
+
+                        Text {
+                            text: WeatherService.temp
+                            color: root.hasError ? Theme.textMuted : Theme.textPrimary
+                            font.pixelSize: 28
+                            font.bold: true
+
+                            Behavior on color {
+                                ColorAnimation { duration: Theme.animationNormal }
+                            }
+                        }
+
+                        // Feels like badge
+                        Rectangle {
+                            height: 20
+                            implicitWidth: feelsText.implicitWidth + 12
+                            radius: 10
+                            color: Theme.buttonBackground
+                            visible: WeatherService.feelsLike !== "--"
+
+                            Text {
+                                id: feelsText
+                                anchors.centerIn: parent
+                                text: "Feels like " + WeatherService.feelsLike
+                                color: root.hasError ? Theme.textMuted : Theme.textSecondary
+                                font.pixelSize: 10
+                                font.bold: true
+                            }
+                        }
                     }
 
                     Text {
-                        text: WeatherService.condition
-                        color: Theme.textSecondary
-                        font.pixelSize: 12
+                        text: root.hasError ? WeatherService.errorMessage : WeatherService.condition
+                        color: root.hasError ? Theme.danger : Theme.textSecondary
+                        font.pixelSize: 13
+                        font.bold: true
                         elide: Text.ElideRight
+                    }
+
+                    Text {
+                        text: WeatherService.lastUpdated ? ("Updated at " + WeatherService.lastUpdated) : ""
+                        color: Theme.textMuted
+                        font.pixelSize: 10
+                        visible: WeatherService.lastUpdated !== "" && !root.hasError
                     }
                 }
             }
         }
 
-        // Secondary Details (Humidity & Wind)
-        RowLayout {
+        // Secondary Metrics Grid: 4 Clean Informational Tiles
+        GridLayout {
             Layout.fillWidth: true
-            spacing: 10
+            columns: 2
+            rowSpacing: 8
+            columnSpacing: 8
 
+            // 1. Humidity
             Rectangle {
                 Layout.fillWidth: true
-                height: 50
+                height: 52
                 radius: 12
                 color: Theme.surface
                 border.width: 1
@@ -126,18 +249,19 @@ FocusScope {
                     anchors.fill: parent
                     anchors.margins: 10
                     spacing: 8
-                    Text { text: "󰖎"; font.family: Theme.iconFont; font.pixelSize: 16; color: Theme.accent }
+                    Text { text: "󰖎"; font.family: Theme.iconFont; font.pixelSize: 18; color: Theme.accent }
                     ColumnLayout {
                         spacing: 1
-                        Text { text: "Humidity"; color: Theme.textSecondary; font.pixelSize: 9 }
-                        Text { text: WeatherService.humidity; color: Theme.textPrimary; font.bold: true; font.pixelSize: 12 }
+                        Text { text: "Humidity"; color: Theme.textSecondary; font.pixelSize: 10 }
+                        Text { text: WeatherService.humidity; color: Theme.textPrimary; font.bold: true; font.pixelSize: 13 }
                     }
                 }
             }
 
+            // 2. Wind Speed
             Rectangle {
                 Layout.fillWidth: true
-                height: 50
+                height: 52
                 radius: 12
                 color: Theme.surface
                 border.width: 1
@@ -147,11 +271,62 @@ FocusScope {
                     anchors.fill: parent
                     anchors.margins: 10
                     spacing: 8
-                    Text { text: "󰖝"; font.family: Theme.iconFont; font.pixelSize: 16; color: Theme.accent }
+                    Text { text: "󰖝"; font.family: Theme.iconFont; font.pixelSize: 18; color: Theme.accent }
                     ColumnLayout {
                         spacing: 1
-                        Text { text: "Wind"; color: Theme.textSecondary; font.pixelSize: 9 }
-                        Text { text: WeatherService.wind; color: Theme.textPrimary; font.bold: true; font.pixelSize: 12 }
+                        Text { text: "Wind"; color: Theme.textSecondary; font.pixelSize: 10 }
+                        Text { text: WeatherService.wind; color: Theme.textPrimary; font.bold: true; font.pixelSize: 13 }
+                    }
+                }
+            }
+
+            // 3. Air Pressure
+            Rectangle {
+                Layout.fillWidth: true
+                height: 52
+                radius: 12
+                color: Theme.surface
+                border.width: 1
+                border.color: Theme.border
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.margins: 10
+                    spacing: 8
+                    Text { text: "󰥔"; font.family: Theme.iconFont; font.pixelSize: 18; color: Theme.accent }
+                    ColumnLayout {
+                        spacing: 1
+                        Text { text: "Pressure"; color: Theme.textSecondary; font.pixelSize: 10 }
+                        Text { text: WeatherService.pressure !== "--" ? WeatherService.pressure : "1013 hPa"; color: Theme.textPrimary; font.bold: true; font.pixelSize: 13 }
+                    }
+                }
+            }
+
+            // 4. UV Index / Precipitation
+            Rectangle {
+                Layout.fillWidth: true
+                height: 52
+                radius: 12
+                color: Theme.surface
+                border.width: 1
+                border.color: Theme.border
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.margins: 10
+                    spacing: 8
+                    Text { text: "󰖙"; font.family: Theme.iconFont; font.pixelSize: 18; color: Theme.accent }
+                    ColumnLayout {
+                        spacing: 1
+                        Text { text: "UV Index"; color: Theme.textSecondary; font.pixelSize: 10 }
+                        Text {
+                            text: WeatherService.uvIndex !== "--"
+                                ? WeatherService.uvIndex
+                                : (WeatherService.precipitation !== "--" ? WeatherService.precipitation : "Low")
+                            color: Theme.textPrimary
+                            font.bold: true
+                            font.pixelSize: 13
+                        }
                     }
                 }
             }

@@ -9,28 +9,56 @@ Singleton {
     id: root
 
     property string temp: "--"
+    property string feelsLike: "--"
+    property string tempHigh: "--"
+    property string tempLow: "--"
+    property string pressure: "--"
+    property string uvIndex: "--"
+    property string precipitation: "--"
     property string condition: "Loading..."
     property string icon: "󰖐"
     property string humidity: "--"
     property string wind: "--"
     property string city: ""
+    property string providerName: "Open-Meteo"
+    property string currentProvider: ConfigStore.weatherProvider || "openmeteo"
+    property string lastUpdated: ""
+    property string errorMessage: ""
     property bool loading: false
     property bool loaded: false
+
+    readonly property var providers: [
+        { id: "openmeteo", name: "Open-Meteo", desc: "Fast & realtime", icon: "󱘖" },
+        { id: "wttr", name: "wttr.in", desc: "Lightweight", icon: "󰖐" },
+        { id: "metno", name: "MET Norway", desc: "yr.no forecast", icon: "󰼳" },
+        { id: "aggregator", name: "Aggregator", desc: "Consensus", icon: "󰖑" }
+    ]
+
+    function setProvider(providerId) {
+        if (!providerId) return
+        ConfigStore.weatherProvider = providerId
+        ConfigStore.save()
+        root.currentProvider = providerId
+        root.refresh()
+    }
 
     function refresh() {
         if (loading) return
         loading = true
+        errorMessage = ""
 
+        var prov = ConfigStore.weatherProvider || "openmeteo"
         var loc = ConfigStore.weatherLocation ? ConfigStore.weatherLocation.trim() : ""
-        var url = "https://wttr.in/" + encodeURIComponent(loc) + "?format=j1"
+        var scriptPath = "scripts/weather-fetch.py"
 
-        fetchProc.command = ["curl", "-s", "--max-time", "10", url]
+        fetchProc.command = ["python3", scriptPath, prov, loc]
         fetchProc.running = false
         fetchProc.running = true
     }
 
     Timer {
-        interval: 1800000 // 30 minutes
+        id: pollTimer
+        interval: Math.max(1, ConfigStore.weatherPollIntervalMins || 5) * 60 * 1000 // 5 minutes default
         running: true
         repeat: true
         triggeredOnStart: true
@@ -42,6 +70,13 @@ Singleton {
         function onWeatherLocationChanged() {
             root.refresh()
         }
+        function onWeatherProviderChanged() {
+            root.currentProvider = ConfigStore.weatherProvider || "openmeteo"
+            root.refresh()
+        }
+        function onWeatherPollIntervalMinsChanged() {
+            pollTimer.interval = Math.max(1, ConfigStore.weatherPollIntervalMins || 5) * 60 * 1000
+        }
     }
 
     Process {
@@ -52,39 +87,32 @@ Singleton {
             onStreamFinished: {
                 root.loading = false
                 try {
-                    var data = JSON.parse(outCollector.text)
-                    var curr = data.current_condition[0]
-                    root.temp = curr.temp_C + "°C"
-                    root.humidity = curr.humidity + "%"
-                    root.wind = curr.windspeedKmph + " km/h"
-                    root.condition = curr.weatherDesc[0].value
-
-                    if (ConfigStore.weatherLocation && ConfigStore.weatherLocation.trim() !== "") {
-                        root.city = ConfigStore.weatherLocation.trim()
-                    } else if (data.nearest_area && data.nearest_area.length > 0) {
-                        var area = data.nearest_area[0]
-                        root.city = area.areaName[0].value
+                    var data = JSON.parse(outCollector.text.trim())
+                    if (data.success) {
+                        root.temp = data.temp || "--"
+                        root.feelsLike = data.feels_like || "--"
+                        root.tempHigh = data.temp_high || "--"
+                        root.tempLow = data.temp_low || "--"
+                        root.pressure = data.pressure || "--"
+                        root.uvIndex = data.uv_index || "--"
+                        root.precipitation = data.precip || "--"
+                        root.humidity = data.humidity || "--"
+                        root.wind = data.wind || "--"
+                        root.condition = data.condition || "Unknown"
+                        root.icon = data.icon || "󰖐"
+                        root.city = data.city || ""
+                        root.providerName = data.providerName || data.provider || "Weather"
+                        root.lastUpdated = data.updated || ""
+                        root.loaded = true
+                        root.errorMessage = ""
+                    } else {
+                        root.errorMessage = data.error || "Failed to load weather"
                     }
-
-                    var code = parseInt(curr.weatherCode)
-                    root.icon = root.getWeatherIcon(code)
-                    root.loaded = true
                 } catch (e) {
-                    console.log("WeatherService parse error:", e)
+                    console.log("WeatherService parse error:", e, "output was:", outCollector.text)
+                    root.errorMessage = "Parse error"
                 }
             }
         }
-    }
-
-    function getWeatherIcon(code) {
-        if (code === 113) return "󰖙"
-        if (code === 116) return "󰖕"
-        if (code === 119 || code === 122) return "󰖐"
-        if (code >= 200 && code <= 230) return "󰖓"
-        if (code >= 260 && code <= 284) return "󰖗"
-        if (code >= 293 && code <= 314) return "󰖖"
-        if (code >= 317 && code <= 338) return "󰖘"
-        if (code >= 350 && code <= 377) return "󰖒"
-        return "󰖐"
     }
 }

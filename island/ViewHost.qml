@@ -87,6 +87,12 @@ Item {
 
             case IslandState.nightLightMode:
                 return nightLightView
+
+            case IslandState.weatherSettingsMode:
+                return weatherSettingsView
+
+            case IslandState.trayMode:
+                return trayView
             }
 
             return null
@@ -171,6 +177,16 @@ Item {
     Component {
         id: weatherView
         WeatherView { }
+    }
+
+    Component {
+        id: weatherSettingsView
+        WeatherSettingsView { }
+    }
+
+    Component {
+        id: trayView
+        TrayView { }
     }
 
     Component {

@@ -3,123 +3,79 @@ pragma Singleton
 import QtQuick
 
 // =========================================================
-// SAMURAI — Warm Cinematic Forest Dark (wallpaper-derived)
-// Migrated from monochrome to wallpaper palette:
-// Window #120C0B, View #170F0E, Sidebar #211513,
-// Popover #2B1B17, Borders #493029, Accent #C98B73
+// MONOCHROME / FALLBACK THEME
+// Muted neutral zinc/slate palette: calm contrast, zero glare.
 // =========================================================
 
 QtObject {
-    // =========================================================
-    // BACKGROUNDS
-    // =========================================================
+    // Backgrounds
+    property color background: "#09090B"
+    property color surface: "#141416"
+    property color surfaceVariant: "#1E1E22"
+    property color card: "#18181B"
 
-    property color background: "#120C0B"
-    property color surface: "#170F0E"
-    property color surfaceVariant: "#211513"
-    property color card: "#2B1B17"
-
-    // =========================================================
-    // OVERLAYS
-    // =========================================================
-
+    // Overlays
     property color overlayLight: "#00000022"
     property color overlayMedium: "#00000044"
     property color overlayStrong: "#00000066"
 
-    // =========================================================
-    // TEXT
-    // =========================================================
+    // Text
+    property color textPrimary: "#F4F4F5"
+    property color textSecondary: "#A1A1AA"
+    property color textMuted: "#71717A"
 
-    property color textPrimary: "#F1E9E4"
-    property color textSecondary: "#D0C0B9"
-    property color textMuted: "#9D8980"
+    // Icons
+    property color icon: "#A1A1AA"
+    property color iconActive: "#F4F4F5"
+    property color iconDisabled: "#52525B"
 
-    // =========================================================
-    // ICONS
-    // =========================================================
+    // Accent (Soft neutral silver/slate)
+    property color accent: "#E4E4E7"
+    property color accentHover: "#FFFFFF"
+    property color accentPressed: "#D4D4D8"
 
-    property color icon: "#D0C0B9"
-    property color iconActive: "#F1E9E4"
-    property color iconDisabled: "#9D8980"
-
-    // =========================================================
-    // ACCENT
-    // =========================================================
-
-    property color accent: "#C98B73"
-    property color accentHover: "#D59A80"
-    property color accentPressed: "#B57E63"
-
-    // =========================================================
-    // BORDERS
-    // =========================================================
-
-    property color border: "#493029"
-    property color borderHover: "#6E4E46"
+    // Borders
+    property color border: "#27272A"
+    property color borderHover: "#3F3F46"
     property color borderSelected: accent
-    property color borderSubtle: "#00000020"
+    property color borderSubtle: "#FFFFFF12"
 
-    // =========================================================
-    // BUTTONS
-    // =========================================================
-
-    property color buttonBackground: "#2B1B17"
-    property color buttonHover: "#36211D"
-    property color buttonPressed: "#493029"
+    // Buttons
+    property color buttonBackground: "#18181B"
+    property color buttonHover: "#27272A"
+    property color buttonPressed: "#3F3F46"
     property color buttonSelected: accent
     property color buttonText: textPrimary
-    property color controlButtonHover: "#493029"
+    property color controlButtonHover: "#27272A"
 
-    // =========================================================
-    // DESTRUCTIVE ACTIONS
-    // =========================================================
+    // Destructive actions / Semantics
+    property color danger: "#F87171"
+    property color dangerHover: "#EF4444"
+    property color warning: "#FBBF24"
+    property color success: "#4ADE80"
 
-    property color danger: "#E6A29B"
-    property color dangerHover: "#C98785"
-    property color warning: "#D9AE78"
-    property color success: "#A8BF96"
-
-    // =========================================================
-    // INPUTS / SLIDERS
-    // =========================================================
-
-    property color sliderBackground: "#211513"
+    // Inputs / sliders
+    property color sliderBackground: "#27272A"
     property color sliderFill: accent
-    property color inputBackground: "#211513"
+    property color inputBackground: "#141416"
     property color inputBorder: border
 
-    // =========================================================
-    // NOTIFICATIONS
-    // =========================================================
-
+    // Notifications
     property color notificationBackground: card
     property color notificationUnread: surfaceVariant
 
-    // =========================================================
-    // MEDIA
-    // =========================================================
-
+    // Media
     property color progress: accent
-    property color progressBackground: "#493029"
+    property color progressBackground: "#27272A"
 
-    // =========================================================
-    // WALLPAPER SELECTOR
-    // =========================================================
-
+    // Wallpaper selector
     property color wallpaperOverlay: overlayStrong
     property color wallpaperSelection: accent
 
-    // =========================================================
-    // POWER MENU
-    // =========================================================
-
+    // Power menu
     property color powerDanger: danger
     property color powerWarning: warning
 
-    // =========================================================
-    // FONTS
-    // =========================================================
-
+    // Fonts
     property string iconFont: "JetBrainsMono Nerd Font"
 }

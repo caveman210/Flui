@@ -1,0 +1,35 @@
+{
+  "weatherProvider": "aggregator",
+  "weatherLocation": "",
+  "weatherApiKey": "",
+  "weatherPollIntervalMins": 5,
+  "barInfoMode": "cycle",
+  "layout": 0,
+  "barEdgePosition": 0,
+  "autoHideBar": false,
+  "dnd": false,
+  "nightLightSchedule": true,
+  "nightLightStart": "20:00",
+  "nightLightEnd": "07:00",
+  "nightLightTransitionMins": 15,
+  "nightLightCurveType": "scurve",
+  "nightLightControlPoints": [
+    {
+      "x": 0,
+      "y": 0
+    },
+    {
+      "x": 0.35,
+      "y": 0.08
+    },
+    {
+      "x": 0.65,
+      "y": 0.92
+    },
+    {
+      "x": 1,
+      "y": 1
+    }
+  ],
+  "nightLightTargetTemp": 4500
+}
