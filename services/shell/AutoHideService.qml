@@ -274,7 +274,9 @@ Singleton {
 
     FileView {
         id: behaviorFile
-        path: "assets/app-behavior.json"
+        path: (Quickshell.env("XDG_CONFIG_HOME") !== ""
+            ? (Quickshell.env("XDG_CONFIG_HOME") + "/quickshell")
+            : (Quickshell.env("HOME") + "/.config/quickshell")) + "/assets/app-behavior.json"
         watchChanges: true
 
         // watchChanges only emits fileChanged; reload() is what

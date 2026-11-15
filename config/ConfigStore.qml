@@ -7,7 +7,9 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    readonly property string configPath: "settings.json"
+    readonly property string configPath: (Quickshell.env("XDG_CONFIG_HOME") !== ""
+        ? (Quickshell.env("XDG_CONFIG_HOME") + "/quickshell")
+        : (Quickshell.env("HOME") + "/.config/quickshell")) + "/settings.json"
 
     // Weather Settings
     property string weatherProvider: "openmeteo" // "openmeteo", "wttr", "metno", "aggregator"

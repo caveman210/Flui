@@ -51,8 +51,11 @@ Singleton {
         }
     }
 
-    readonly property string themesDir: "styles/themes"
-    readonly property string matugenThemePath: "styles/themes/matugen/Theme.qml"
+    readonly property string configDir: Quickshell.env("XDG_CONFIG_HOME") !== ""
+        ? (Quickshell.env("XDG_CONFIG_HOME") + "/quickshell")
+        : (Quickshell.env("HOME") + "/.config/quickshell")
+    readonly property string themesDir: configDir + "/styles/themes"
+    readonly property string matugenThemePath: configDir + "/styles/themes/matugen/Theme.qml"
 
     Process {
         id: themeLister
@@ -212,7 +215,7 @@ Singleton {
 
         process.command = [
             "bash",
-            "scripts/theme.sh",
+            root.configDir + "/scripts/theme.sh",
             themeName
         ]
 
@@ -296,7 +299,7 @@ Singleton {
         command: [
             "bash",
             "-c",
-            "cat .current_theme 2>/dev/null || true"
+            "cat \"" + root.configDir + "/.current_theme\" 2>/dev/null || true"
         ]
 
         stdout: StdioCollector {

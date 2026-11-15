@@ -49,7 +49,10 @@ Singleton {
 
         var prov = ConfigStore.weatherProvider || "openmeteo"
         var loc = ConfigStore.weatherLocation ? ConfigStore.weatherLocation.trim() : ""
-        var scriptPath = "scripts/weather-fetch.py"
+        var cfg = Quickshell.env("XDG_CONFIG_HOME") !== ""
+            ? (Quickshell.env("XDG_CONFIG_HOME") + "/quickshell")
+            : (Quickshell.env("HOME") + "/.config/quickshell")
+        var scriptPath = cfg + "/scripts/weather-fetch.py"
 
         fetchProc.command = ["python3", scriptPath, prov, loc]
         fetchProc.running = false
