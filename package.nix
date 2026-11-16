@@ -39,9 +39,38 @@ stdenvNoCC.mkDerivation {
     mkdir -p "$out/share/flui" "$out/bin"
     cp -r * "$out/share/flui/"
 
-    # Wrapper script that sets up runtime PATH dependencies
-    makeWrapper "${quickshell}/bin/quickshell" "$out/bin/flui" \
-      --add-flags "-c $out/share/flui" \
+    # Wrapper script: handles initial config setup, path resolution, and runtime PATH
+    cat <<'EOF' > "$out/bin/flui"
+    #!/usr/bin/env bash
+    set -e
+
+    CONFIG_DIR="''${XDG_CONFIG_HOME:-$HOME/.config}/quickshell"
+    mkdir -p "$CONFIG_DIR"
+
+    # Initialize settings.json from template on first run if missing
+    if [ ! -f "$CONFIG_DIR/settings.json" ]; then
+      if [ -f "$CONFIG_DIR/settings.json.example" ]; then
+        cp "$CONFIG_DIR/settings.json.example" "$CONFIG_DIR/settings.json"
+      elif [ -f "@FLUI_SHARE@/settings.json.example" ]; then
+        cp "@FLUI_SHARE@/settings.json.example" "$CONFIG_DIR/settings.json"
+      fi
+    fi
+
+    # Convenient IPC subcommand routing
+    if [ "$1" = "ipc" ]; then
+      shift
+      exec quickshell ipc call flui "$@"
+    fi
+
+    exec quickshell -c "@FLUI_SHARE@" "$@"
+    EOF
+
+    # Substitute @FLUI_SHARE@ with the store path
+    substituteInPlace "$out/bin/flui" --replace "@FLUI_SHARE@" "$out/share/flui"
+    chmod +x "$out/bin/flui"
+
+    # Wrap the launcher with all runtime dependencies prepended to PATH
+    wrapProgram "$out/bin/flui" \
       --prefix PATH : ${lib.makeBinPath [
         quickshell
         awww
@@ -60,7 +89,6 @@ stdenvNoCC.mkDerivation {
 
   meta = with lib; {
     description = "Fluid, minimalist Dynamic Island desktop shell built with Quickshell";
-    homepage = "https://github.com/ElhamSadiqi/Luci";
     license = licenses.mit;
     platforms = platforms.linux;
     mainProgram = "flui";

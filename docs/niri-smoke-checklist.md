@@ -1,84 +1,51 @@
-# niri smoke checklist
+# Niri Smoke Checklist
 
-Run on a live niri session to make sure Luci works end to end.
+Use this checklist on a live Niri session to verify Flui functionality end-to-end.
 
-Environment used for the last pass: **niri 26.04 (Nixpkgs)**, single output
-`eDP-1` (1920×1200, scale 1.2), shell started with `qs`.
+Environment: **niri** with Quickshell, single/multi-output, shell started via `qs` or systemd `flui.service`.
 
-## Startup & reload
+## 1. Startup & Hot Reload
 
-- [x] Shell starts and the island renders on the top edge.
-- [x] Editing a file in the config dir hot-reloads: log shows
-      `Reloading configuration…` → `Configuration Loaded`, no QML errors.
-- [x] Layout/mode are in-memory: a reload returns the island to Pill (by design).
+- [x] Shell starts cleanly and the island renders on the top or bottom screen edge.
+- [x] Touching `shell.qml` or editing any QML file triggers `Reloading configuration…` → `Configuration Loaded` with zero errors.
+- [x] Missing or custom wallpaper folders fall back gracefully without blank screens.
 
-## IPC — `qs ipc call flui <command>`
+## 2. IPC Functionality (`qs ipc call flui <command>`)
 
-All commands exit `0`.
+All commands must exit with code `0`:
 
-| command | result |
+| Command | Expected Result |
 |---|---|
-| `openExpandedHome` | opens the expanded view |
-| `openControlCenter` | opens the Control Center |
-| `openPowerMenu` | opens the power menu |
-| `openWallpaperSelector` | opens the wallpaper selector |
-| `openThemeSelector` | opens the theme selector |
-| `openWifiMenu` | opens the Wi-Fi menu |
-| `openBluetoothMenu` | opens the Bluetooth menu |
-| `openMedia` | opens the media controls |
-| `openNotifications` | opens the notifications pane |
-| `cycleLayout` | cycles Pill → Notch → Bar |
-| `focusToggle` | toggles Focus |
-| `reset` | returns to the idle island |
+| `openExpandedHome` | Opens expanded island view |
+| `openControlCenter` | Opens Control Center card grid |
+| `openPowerMenu` | Opens system session power menu |
+| `openWallpaperSelector` | Opens 3-column wallpaper grid & theme inspector |
+| `openThemeSelector` | Opens theme picker |
+| `openWifiMenu` | Opens NetworkManager / Wi-Fi menu |
+| `openBluetoothMenu` | Opens BlueZ Bluetooth device menu |
+| `openMedia` | Opens media player controls & waveform |
+| `openNotifications` | Opens notification history pane |
+| `cycleLayout` | Smoothly cycles Pill → Notch → Bar |
+| `focusToggle` | Toggles Do Not Disturb mode |
+| `reset` | Collapses any open panel back to idle island |
 
-## Layouts
+## 3. Layouts & Docking
 
-- [x] Pill: compact clock; hover expands.
-- [x] Notch: capsule flush with the top edge.
-- [x] Bar: full-width bar — media left, clock center, tray + status right;
-      the clock and the right cluster each drop a panel.
-- [x] `cycleLayout` ×3 returns to the starting layout.
+- [x] **Pill**: Compact pill shape displaying time/weather; expands smoothly on hover.
+- [x] **Notch**: Sits flush with top display boundary.
+- [x] **Bar**: Spans monitor width with FlowCorner edge blending.
+- [x] **Autohide**: Hides island offscreen when focus is lost; EdgeTriggerWindow reveals it on mouse approach.
 
-## Views
+## 4. Theming & Wallpapers
 
-- [x] Control Center (bar): card grid + storage card, and **no**
-      volume/brightness sliders (they live in the clock dropdown).
-- [ ] Control Center (pill/notch): card grid + volume/brightness sliders +
-      notifications pane. Not driven in the last pass (the CC only opens over
-      the IPC from the bar layout); guaranteed by construction — the same
-      `ControlCenterView` gates the sliders on `!layoutIsBar`.
-- [x] Night Light card present (`gammastep` installed) and toggles warm/neutral.
-- [ ] Media controls: artwork, title/artist, waveform, progress, transport.
-- [x] Notifications pane lists history; a record whose avatar has gone missing
-      falls back to the app icon instead of breaking.
+- [x] Wallpaper grid shows 3-column thumbnails with aspect ratio preservation.
+- [x] Clicking a wallpaper card enters the detail view and extracts Matugen palettes.
+- [x] "Preview (5s)" applies wallpaper and theme in-memory for 5 seconds and rolls back automatically.
+- [x] Pressing `Esc` immediately cancels active preview.
+- [x] "Apply" writes wallpaper and theme permanently.
+- [x] Shuffle timer triggers at configured interval (`15m`, `30m`, `1h`, `3h`, `6h`, `12h`, `1d`).
 
-## Status / OSD
+## 5. System Health & Process Cleanliness
 
-- [x] Volume / brightness (via `scripts/volume.sh` and `scripts/brightness.sh`)
-      raise the status toast.
-- [x] Bar, clock dropdown open: the OSD is suppressed — the slider on screen is
-      the feedback.
-- [ ] Workspace change toast.
-
-## Process hygiene
-
-- [x] No zombie/defunct children; the volume/brightness helpers exit cleanly.
-- [x] Night Light OFF runs an unanchored `pkill gammastep` plus a one-shot
-      `gammastep -x` reset, because niri keeps the last gamma ramp after the
-      daemon exits.
-
-## Known benign warnings
-
-- `NotificationView.qml[111] Cannot open …/Screenshot from 2026-10-19 14-02-20.png`
-  — the referenced notification image was moved out of `~/Pictures/Screenshots`;
-  the view falls back to the app icon.
-- `NotificationView.qml[111] Cannot open …/c4507d76f10ca0d4.png` — an old
-  history record references an avatar blob that no longer exists; same fallback.
-- `quickshell.bluetooth.adapter: Failed to start discovery … "Resource Not Ready"`
-  — transient; fired while opening the Bluetooth menu as the adapter came up.
-
-## Not covered here (needs Hyprland)
-
-- Theme sync to the compositor (`scripts/compositor/hyprland-theme-sync.sh`).
-- `HyprlandFocusGrabDismiss` for modal views.
-- `HyprlandEdgeHoverMonitor` auto-hide reveal.
+- [x] No zombie subprocesses from `cava`, `pw-dump`, or `lsblk`.
+- [x] Night Light toggles cleanly without leaving residual `gammastep` processes.

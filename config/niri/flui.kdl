@@ -1,0 +1,53 @@
+// Flui Dynamic Island & Shell — Niri integration.
+//
+// Include this file from your main ~/.config/niri/config.kdl:
+//
+//     include "~/.config/quickshell/config/niri/flui.kdl"
+//
+// Or copy the blocks you want into your config.
+
+// ---------------------------------------------------------
+// Startup
+// ---------------------------------------------------------
+
+// Launch Flui on login (plain `qs` runs ~/.config/quickshell/shell.qml).
+spawn-at-startup "qs"
+
+// Wallpaper backend used by Flui's Wallpaper Selector.
+spawn-at-startup "awww-daemon"
+
+// ---------------------------------------------------------
+// Keybindings
+// ---------------------------------------------------------
+
+binds {
+    // Flui views (IPC — compositor-agnostic).
+    Mod+P { spawn "qs" "ipc" "call" "flui" "openPowerMenu"; }
+    Mod+W { spawn "qs" "ipc" "call" "flui" "openWallpaperSelector"; }
+    Mod+T { spawn "qs" "ipc" "call" "flui" "openThemeSelector"; }
+
+    // Volume / brightness via Flui helpers (shows island notifications).
+    XF86AudioRaiseVolume repeat=true allow-when-locked=true { spawn-sh "~/.config/quickshell/scripts/volume.sh up"; }
+    XF86AudioLowerVolume repeat=true allow-when-locked=true { spawn-sh "~/.config/quickshell/scripts/volume.sh down"; }
+    XF86AudioMute allow-when-locked=true { spawn-sh "~/.config/quickshell/scripts/volume.sh mute"; }
+    XF86MonBrightnessUp repeat=true allow-when-locked=true { spawn-sh "~/.config/quickshell/scripts/brightness.sh +5%"; }
+    XF86MonBrightnessDown repeat=true allow-when-locked=true { spawn-sh "~/.config/quickshell/scripts/brightness.sh 5%-"; }
+}
+
+// ---------------------------------------------------------
+// Window rules
+// ---------------------------------------------------------
+
+// Popups and floating utilities used by the shell or launched from it.
+window-rule {
+    match app-id=r#"^zenity$"#
+    match app-id=r#"^org\.gnome\.FileRoller$"#
+    match app-id=r#"^pavucontrol$"#
+    match app-id=r#"^blueman-manager$"#
+    match title=r#"^Open File$"#
+    match title=r#"^Save File$"#
+    match title=r#"^Volume Control$"#
+    match title=r#"^Bluetooth Devices$"#
+
+    open-floating true
+}

@@ -27,7 +27,7 @@ fi
 # -------------------------
 # Compositor theme sync hooks (Hyprland only for now; opt-out via
 # ENABLE_HYPR_THEME=0). Niri theming is intentionally a no-op for now —
-# Luci keeps its own theme. See config/niri/ for the future hook.
+# Flui keeps its own theme. See config/niri/ for the future hook.
 # -------------------------
 
 "$(dirname "$0")/compositor/hyprland-theme-sync.sh" "$THEME_DIR"

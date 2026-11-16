@@ -1,42 +1,54 @@
-# IPC
+# Flui IPC Interface
 
-Luci exposes one IPC target, `luci`. Call it from anywhere:
+Flui exposes its IPC target under `flui`. Call it from anywhere via the Quickshell CLI:
 
 ```bash
 qs ipc call flui <command>
 ```
 
-| Command | Effect |
-|---|---|
-| `openExpandedHome` | open the expanded view (home) |
-| `openControlCenter` | open the Control Center |
-| `openPowerMenu` | open the power menu |
-| `openWallpaperSelector` | open the wallpaper selector |
-| `openThemeSelector` | open the theme selector |
-| `openWifiMenu` | open the Wi-Fi menu |
-| `openBluetoothMenu` | open the Bluetooth menu |
-| `openMedia` | open the media controls (left section) |
-| `openNotifications` | open the notifications pane |
-| `cycleLayout` | cycle the island layout: Pill → Notch → Bar |
-| `focusToggle` | toggle the Focus state |
-| `reset` | return to the idle island |
+Or using the wrapped Nix binary:
 
-## Compositor binds
-
-Hyprland (`hyprland.lua`):
-
-```lua
-hl.bind("SUPER + P", hl.dsp.exec_cmd("qs ipc call flui openPowerMenu"))
-hl.bind("SUPER + W", hl.dsp.exec_cmd("qs ipc call flui openWallpaperSelector"))
-hl.bind("SUPER + T", hl.dsp.exec_cmd("qs ipc call flui openThemeSelector"))
+```bash
+flui ipc <command>
 ```
 
-niri (`config.kdl`):
+## Available Commands
+
+| Command | Description |
+|---|---|
+| `openExpandedHome` | Open the expanded island view (clock, media, system status) |
+| `openControlCenter` | Open the Control Center panel |
+| `openPowerMenu` | Open the system power menu (lock, sleep, reboot, shutdown) |
+| `openWallpaperSelector`| Open the 3-column wallpaper grid & theme inspector |
+| `openThemeSelector` | Open the theme switcher |
+| `openWifiMenu` | Open the Wi-Fi connections menu |
+| `openBluetoothMenu` | Open the Bluetooth device pairing menu |
+| `openMedia` | Open rich media player controls |
+| `openNotifications` | Open the notifications history center |
+| `cycleLayout` | Cycle active layout: Pill → Notch → Bar |
+| `focusToggle` | Toggle Do Not Disturb (DND) focus state |
+| `reset` | Close any active panel and return to idle state |
+
+## Compositor Keybindings
+
+### Hyprland (`hyprland.conf` or `hyprland.lua`)
+
+```ini
+bind = SUPER, P, exec, qs ipc call flui openPowerMenu
+bind = SUPER, W, exec, qs ipc call flui openWallpaperSelector
+bind = SUPER, T, exec, qs ipc call flui openThemeSelector
+bind = SUPER, C, exec, qs ipc call flui openControlCenter
+bind = SUPER, N, exec, qs ipc call flui openNotifications
+```
+
+### Niri (`config.kdl`)
 
 ```kdl
-Mod+P { spawn "qs" "ipc" "call" "luci" "openPowerMenu"; }
-Mod+W { spawn "qs" "ipc" "call" "luci" "openWallpaperSelector"; }
-Mod+T { spawn "qs" "ipc" "call" "luci" "openThemeSelector"; }
+Mod+P { spawn "qs" "ipc" "call" "flui" "openPowerMenu"; }
+Mod+W { spawn "qs" "ipc" "call" "flui" "openWallpaperSelector"; }
+Mod+T { spawn "qs" "ipc" "call" "flui" "openThemeSelector"; }
+Mod+C { spawn "qs" "ipc" "call" "flui" "openControlCenter"; }
+Mod+N { spawn "qs" "ipc" "call" "flui" "openNotifications"; }
 ```
 
-`config/niri/luci.kdl` in this repo is a ready-made block you can `include`.
+A ready-made configuration block is available in `config/niri/flui.kdl`.

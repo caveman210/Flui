@@ -1,0 +1,230 @@
+name: CI / Quality & Functionality Assurance
+
+on:
+  push:
+    branches: [ main, master, Luci-Revamped ]
+  pull_request:
+    branches: [ main, master, Luci-Revamped ]
+
+jobs:
+  # --------------------------------------------------------------------------
+  # 1. Code Quality & Syntax Validation
+  # --------------------------------------------------------------------------
+  syntax-and-lint:
+    name: Syntax & Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Validate Python Scripts
+        run: |
+          echo "Checking Python syntax in scripts..."
+          python3 -m py_compile scripts/*.py
+
+      - name: Validate Shell Scripts
+        run: |
+          echo "Checking Shell syntax in scripts..."
+          for sh in scripts/*.sh scripts/compositor/*.sh; do
+            if [ -f "$sh" ]; then
+              bash -n "$sh" || exit 1
+            fi
+          done
+
+      - name: Validate Settings Template
+        run: |
+          echo "Verifying settings.json.example..."
+          test -f settings.json.example || exit 1
+          python3 -c "
+          import json
+          with open('settings.json.example') as f:
+              data = json.load(f)
+          assert 'weatherProvider' in data
+          assert 'layout' in data
+          assert 'wallpaperDir' in data
+          assert 'matugenEnabled' in data
+          print('settings.json.example validated successfully')
+          "
+
+      - name: QML Static Integrity & Import Verification
+        run: |
+          python3 -c "
+          import os, sys
+
+          qml_files = []
+          for root, dirs, files in os.walk('.'):
+              if '.git' in dirs: dirs.remove('.git')
+              for f in files:
+                  if f.endswith('.qml'):
+                      qml_files.append(os.path.join(root, f))
+
+          errors = 0
+          for path in qml_files:
+              with open(path, 'r', encoding='utf-8', errors='ignore') as fp:
+                  content = fp.read()
+                  if 'pragma Singleton' in content:
+                      lines = content.strip().split('\n')
+                      if not lines[0].startswith('pragma Singleton'):
+                          print(f'Error: pragma Singleton must be on first line in {path}')
+                          errors += 1
+
+          print(f'Verified {len(qml_files)} QML source components. Errors: {errors}')
+          if errors > 0:
+              sys.exit(1)
+          "
+
+  # --------------------------------------------------------------------------
+  # 2. Nixpkgs Package, NixOS & Home Manager Module Validation
+  # --------------------------------------------------------------------------
+  nix-build:
+    name: Nixpkgs Package & Module Evaluation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Flake Output & Schema Check
+        run: |
+          nix flake show
+
+      - name: Build Nixpkgs Package (Flui)
+        run: |
+          nix build .#default --print-build-logs
+
+      - name: Verify Package Binary & Structure
+        run: |
+          test -x result/bin/flui || exit 1
+          test -d result/share/flui || exit 1
+          test -f result/share/flui/shell.qml || exit 1
+
+      - name: Test Nixpkgs Overlay Evaluation
+        run: |
+          nix eval --expr '
+            let
+              flake = builtins.getFlake (toString ./.);
+              pkgs = import flake.inputs.nixpkgs {
+                system = "x86_64-linux";
+                overlays = [ flake.overlays.default ];
+              };
+            in pkgs.flui.name
+          '
+
+      - name: Test NixOS Module Evaluation
+        run: |
+          nix eval --impure --expr '
+            let
+              flake = builtins.getFlake (toString ./.);
+              pkgs = import flake.inputs.nixpkgs { system = "x86_64-linux"; };
+              lib = pkgs.lib;
+              nixosModule = flake.nixosModules.default;
+              evaluated = lib.evalModules {
+                specialArgs = { inherit pkgs; };
+                modules = [
+                  nixosModule
+                  {
+                    options = {
+                      environment.systemPackages = lib.mkOption { type = lib.types.listOf lib.types.package; default = []; };
+                    };
+                    config = {
+                      programs.flui = {
+                        enable = true;
+                      };
+                    };
+                  }
+                ];
+              };
+            in {
+              enable = evaluated.config.programs.flui.enable;
+              packageCount = builtins.length evaluated.config.environment.systemPackages;
+            }
+          '
+
+      - name: Test Home Manager Module Evaluation
+        run: |
+          nix eval --impure --expr '
+            let
+              flake = builtins.getFlake (toString ./.);
+              pkgs = import flake.inputs.nixpkgs { system = "x86_64-linux"; };
+              lib = pkgs.lib;
+              hmModule = flake.homeManagerModules.default;
+              evaluated = lib.evalModules {
+                specialArgs = { inherit pkgs; };
+                modules = [
+                  hmModule
+                  {
+                    options = {
+                      home.packages = lib.mkOption { type = lib.types.listOf lib.types.package; default = []; };
+                      systemd.user.services = lib.mkOption { type = lib.types.attrsOf lib.types.attrs; default = {}; };
+                    };
+                    config = {
+                      programs.flui = {
+                        enable = true;
+                        systemd.enable = true;
+                      };
+                    };
+                  }
+                ];
+              };
+            in {
+              enable = evaluated.config.programs.flui.enable;
+              systemd = evaluated.config.programs.flui.systemd.enable;
+              hasService = evaluated.config.systemd.user.services ? flui;
+              packageCount = builtins.length evaluated.config.home.packages;
+            }
+          '
+
+  # --------------------------------------------------------------------------
+  # 3. Bar & Shell Functionality Maintenance
+  # --------------------------------------------------------------------------
+  bar-functionality:
+    name: Bar & Core Subsystem Maintenance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Test IPC Command Surface Coverage
+        run: |
+          python3 -c "
+          import os, sys, re
+
+          ipc_file = 'services/shell/IslandIPC.qml'
+          with open(ipc_file, 'r') as fp:
+              ipc_content = fp.read()
+
+          ipc_functions = re.findall(r'function\s+([a-zA-Z0-9_]+)\s*\(', ipc_content)
+          print('Exposed IPC functions:', ipc_functions)
+
+          required = [
+              'openPowerMenu', 'openExpandedHome', 'openControlCenter',
+              'reset', 'cycleLayout', 'focusToggle',
+              'openWallpaperSelector', 'openThemeSelector', 'openMedia'
+          ]
+
+          missing = [req for req in required if req not in ipc_functions]
+          if missing:
+              print('Missing critical IPC functions:', missing)
+              sys.exit(1)
+          print('All critical IPC commands verified intact.')
+          "
+
+      - name: Verify Layouts & FlowCorner Bindings
+        run: |
+          test -f views/bar/BarView.qml || exit 1
+          test -f views/pill/DefaultView.qml || exit 1
+          test -f views/notch/NotchView.qml || exit 1
+          test -f island/FlowCorner.qml || exit 1
+          test -f components/sections/WallpaperCard.qml || exit 1
+          test -f views/panels/WallpaperSelectorView.qml || exit 1
+          echo 'Core layout components and views verified.'

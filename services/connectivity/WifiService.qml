@@ -74,7 +74,7 @@ Singleton {
     // ISLAND STATE (transient only, no notification history)
     // =========================================================
 
-    // Used so Luci doesn't show an island prompt when
+    // Used so Flui doesn't show an island prompt when
     // the service first starts and reads the current state.
     property bool initialized: false
     property bool previousConnected: false
@@ -170,7 +170,7 @@ Singleton {
     }
 
     function handleStateChange() {
-        // First stable reading after Luci starts.
+        // First stable reading after Flui starts.
         // Don't send a notification.
         // NOTE: Networking.devices populates async (~2s) - the first
         // D-Bus sync is treated as init so we never spam on boot/reload.

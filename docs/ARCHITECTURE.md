@@ -1,95 +1,53 @@
-# Architecture
+# Flui Architecture
 
-Luci is a single Quickshell `ShellRoot` (`shell.qml`). It instantiates a few
-long-lived services and two layer-shell windows; everything else is QML items
-composed on demand.
+Flui is an adaptive desktop shell and dynamic island built with Quickshell for modern Wayland compositors (Hyprland, Niri, Sway). It runs as a single Quickshell `ShellRoot` (`shell.qml`) managing long-lived data services, layer-shell windows, and on-demand modal panels.
 
 ```
 shell.qml                 entry point (ShellRoot)
-├── core/                 singletons: shared state + controller
-├── island/               dynamic island: state, interaction, view host
-├── services/             data providers (never create UI)
-├── windows/              layer-shell surfaces
-├── views/                what fills the island, per layout
-├── components/           reusable UI pieces
-├── styles/               theme constants + theme definitions
-├── scripts/              helpers the shell shells out to
-├── config/               example compositor configs (Hyprland, niri)
-└── assets/               icons and images
+├── core/                 singletons: shared state, Placement, IslandController
+├── island/               dynamic island engine: state, interaction, ViewHost
+├── services/             headless data & event providers (zero UI)
+├── windows/              Wayland layer-shell surfaces (Island, OSD, EdgeReveal)
+├── views/                layout-specific and panel views (Pill, Notch, Bar, Panels)
+├── components/           reusable UI primitives and sections
+├── styles/               active theme tokens, geometry metrics, and theme palettes
+├── scripts/              lightweight system helpers (volume, brightness, Cava)
+├── config/               compositor configuration templates (Hyprland, Niri)
+├── templates/            bundled Matugen Material You template files
+└── assets/               icons, app rules, and graphic assets
 ```
 
-## core/
+## Core Engine
 
-- **`IslandState`** — the island's `mode` (`default`, `expanded`,
-  `controlCenter`, `powerMenu`, `wifiMenu`, …) and `layout` (`pill`, `notch`,
-  `bar`), plus transient flags (pinning, tray open, hover). Mode and layout are
-  in-memory and reset on reload.
-- **`IslandController`** — every state transition in one place
-  (`openExpanded`, `openControlCenter`, `openMediaControls`, `cycleLayout`,
-  `togglePin`, `reset`, …). Views and IPC call this, never `IslandState`
-  directly.
-- **`StatusManager`** — the transient status toast (OSD): mode, icon, title,
-  value, plus a small queue for device events (wifi/bluetooth).
+- **`IslandState`**: In-memory state tracking active island layout (`pill`, `notch`, `bar`), active panel modes, and transient interaction states.
+- **`IslandController`**: Centralized state dispatcher handling all panel transitions (`openExpanded`, `openWallpaperSelector`, `cycleLayout`, `reset`).
+- **`StatusManager`**: Event-driven OSD coordinator for volume, brightness, workspace, and device connectivity toasts.
 
-## island/
+## Services (Headless & Event-Driven)
 
-- **`Island`** — the visual island: the bar/pill/notch surfaces, the dropdown
-  panels and the flow-corner fillets that blend surfaces into the screen edges.
-- **`ViewHost`** — maps `IslandState.mode` (and layout) to the view that fills
-  the island.
-- **`IslandInteraction`** — hover/click behaviour: expand on hover (pill/notch),
-  collapse on leave, pin/unpin, tray handling in the bar.
-- **`FlowCorner`** — reusable concave fillet used to join the bar and its
-  dropdowns to the monitor borders.
+Data services operate independently from visual UI layers:
+- **Audio & Media**: `AudioService`, `MicrophoneService`, `MediaService` (MPRIS), `CavaService` (visualizer with PipeWire integration).
+- **Appearance**:
+  - `WallpaperService`: Directory scanner, `awww` transition manager, automatic interval shuffling, and 5-second ephemeral palette preview.
+  - `ThemeService`: Dynamic Matugen file reader (`Theme.qml`) and external theme switcher.
+- **Hardware & Environment**:
+  - `StorageService`: `lsblk`-based filesystem and storage device monitor with percentage thresholds.
+  - `WeatherService`: Multi-provider engine (Open-Meteo, wttr.in, MET Norway, Aggregator) with stale-cache fallback.
+  - `NightLightService`: Temperature and gamma ramp controller with custom S-curve and linear easing.
+  - `BatteryService` & `LowBatteryService`: Hardware power monitor prioritizing low-battery alerts in the secondary bubble.
+- **IPC & System**:
+  - `IslandIPC`: Quickshell Unix socket listener bound to target `flui`.
+  - `NotificationService` & `NotificationStore`: Desktop notification daemon with persistent avatar caching and daily history.
 
-## services/
+## Windows & Layout Surfaces
 
-Data providers, one concern each, no UI.
+- **`IslandWindow`**: Anchored layer-shell container dynamically adjusting width and shape across Pill, Notch, and Bar layouts.
+- **`OsdWindow`**: Non-interactive overlay rendering transient hardware feedback toasts.
+- **`EdgeTriggerWindow`**: Border hover strip activating the shell when autohide is enabled.
+- **`FirstRunWindow`**: Compact floating setup card for wallpaper folder discovery and permission-gated app theming.
 
-- Audio / brightness / microphone, wifi / bluetooth, battery + low-battery.
-- `MediaService` (MPRIS) and `CavaService` (visualizer).
-- `NotificationService` + `NotificationStore` — per-day JSONL history under
-  `~/.cache/quickshell/notifications/`, immutable avatar blobs, 30-day prune.
-- `CompositorService` — abstracts Hyprland vs niri (workspaces, keyboard, edge
-  hover) behind `services/compositor/hyprland/` and `services/compositor/niri/`.
-- `ThemeService`, `WallpaperService`, `StorageService`, `NightLightService`.
-- `StatusWatcher` — watches the event file written by `scripts/` (volume,
-  brightness, workspace) and drives the OSD. The shell never polls for these.
-- `IslandIPC` — the `qs ipc call flui <fn>` surface (see `docs/IPC.md`).
+## Packaging & Deployment
 
-## views/
-
-One file per mode, grouped where the layout differs:
-
-- `bar/` — `BarView` (idle bar) and `BarExpandedView` (clock dropdown).
-- `pill/`, `notch/` — compact layouts.
-- `panels/` — control center, power menu, selectors, menus, media, notifications.
-- `shared/` — clock, date, status overlay, notification list.
-
-## windows/
-
-- `IslandWindow` — the layer-shell surface the island lives in (anchored to the
-  top edge; exclusive zone 33 unless auto-hide is on).
-- `EdgeTriggerWindow` — the auto-hide reveal strip.
-- `compositor/` — Hyprland focus-grab dismiss and the niri fallback click
-  catcher.
-
-## styles/
-
-`Theme.qml` is the single source of visual constants (colors, spacing, radii,
-timings). `styles/themes/<name>/` holds each theme's `Theme.qml`,
-`HyprTheme.lua` and `kitty.conf`.
-
-## scripts/
-
-Helpers that touch the OS: `volume.sh`, `brightness.sh`, `theme.sh`
-(→ `compositor/hyprland-theme-sync.sh`), `cava.conf`. Volume and brightness
-write an event file that `StatusWatcher` watches, so the OSD is event-driven.
-
-## Conventions
-
-- Singletons use `pragma Singleton` at the top level only.
-- Components are defined before their consumers (hot reload depends on it).
-- Services never create UI; views never shell out directly.
-- Compositor-specific code lives under `services/compositor/` and
-  `windows/compositor/`.
+- **`package.nix`**: Hermetic Nix derivation installing the shell source into `$out/share/flui` with runtime binary wrappers.
+- **`flake.nix`**: Flake exporting `packages.default` and `homeManagerModules.default` (`programs.flui`).
+- **`settings.json` / `settings.json.example`**: Persistent JSON configuration for wallpaper paths, layout choices, and app theming permissions.

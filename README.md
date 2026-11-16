@@ -1,445 +1,266 @@
 # Flui
 
-Flui is a fluid, minimalist Dynamic Island and desktop shell built with Quickshell for Hyprland and niri.
+**A fluid desktop shell for Hyprland and niri, built with [Quickshell](https://quickshell.org/).**
 
-Unlike rigid desktop bars or overweight desktop environments, Flui adapts dynamically to your workflow. It morphs fluidly between Pill, Notch, and Bar layouts, extracts ambient color schemes from your wallpapers via Matugen, and stays keyboard-friendly, fast, and lightweight.
+Flui brings a compact, animated interface to your Wayland session. Choose a small pill, a notch-style island, or a full-width bar, then open contextual panels for media, system controls, notifications, connectivity, and personalization.
 
-## Features
+The project is built around one shared interface: the island changes shape and reveals the tools you need, when you need them.
 
--  Three island layouts — Pill, Notch and Bar — cycled at runtime
--  Flow corners: the bar and its dropdowns blend into the monitor edges
--  Dynamic Matugen theme generation & wallpaper-driven color engine
--  3-Column Tiled Wallpaper Picker with live 5-second ephemeral preview and auto-revert
--  Configurable automatic wallpaper shuffling (custom intervals from 15m to 1d) with transitions (`awww`)
--  Custom color palette tuning & wallpaper-dominant color swatch picker (ephemeral live edits)
--  Systray icon grid with integrated Notification bell divider and drill-in DBus menu
--  Weather panel with multi-provider integration (Open-Meteo, wttr.in, MET Norway, Aggregator)
--  Night Light scheduling with custom Bezier curves and temperature tuning
--  Real-time Cava audio visualizer with synchronized track title & artist display
--  Rich media controls with waveform progress
--  Control Center with Wi-Fi / Bluetooth / Mic / Night Light / Focus cards and a storage card in the bar
--  Volume and brightness sliders with OSD notifications
--  Status notifications (workspace, device connect/disconnect, battery alerts)
--  Notification history (per-day, with avatars)
--  Battery status with low-battery priority indicators
--  Wi-Fi and Bluetooth status
--  Power menu
--  Vim-inspired keyboard navigation
+> Flui is an actively developed personal desktop project. Its current compositor integrations target Hyprland and niri.
+
+## Highlights
+
+### Three layouts
+
+- **Pill** — a compact clock that expands on hover.
+- **Notch** — a wider island aligned with the top edge.
+- **Bar** — a full-width layout with media, clock, system status, and contextual dropdowns.
+
+The bar and its dropdowns share flow-corner styling, visually joining panels to the screen edges.
+
+### Everyday controls
+
+- MPRIS media controls with track metadata, album art, waveform visualization, and playback progress.
+- Control Center for Wi-Fi, Bluetooth, microphone, Focus, Night Light, wallpaper, auto-hide, and layout.
+- Battery status, low-battery alerts, volume and brightness feedback, workspace changes, and device notifications.
+- Privacy indicators for microphone, camera, and screen-sharing activity.
+- Notification history with per-day storage.
+- Mounted-storage information and removable-device actions.
+- Dedicated power menu.
+
+### Personalization
+
+- Wallpaper selector with temporary preview and automatic rollback.
+- Optional wallpaper rotation and transitions through **awww**.
+- Wallpaper-derived color extraction and **Matugen** theming.
+- Theme selector and optional Hyprland theme synchronization.
+- Weather from Open-Meteo, wttr.in, MET Norway, or the aggregator option.
+- Night Light scheduling with configurable temperature, duration, and easing curve.
+- Vim-inspired navigation in supported selectors and menus.
 
 ## Requirements
 
-Luci is developed and tested with:
+Flui is a Linux/Wayland shell built on Quickshell. Current compositor integrations:
 
-- **Hyprland** 0.56.1 **or niri** 26.04
-- **Quickshell** 0.3.0
-- **Cava** (audio visualizer)
-- **Awww** (wallpaper backend)
-- **hyprsunset** *(optional, Night Light on Hyprland)*
-- **gammastep** *(optional, Night Light on niri)*
+- [Hyprland](https://hypr.land/)
+- [niri](https://github.com/YaLTeR/niri)
 
-These are the versions currently used during development and testing.
+| Dependency | Used for | Notes |
+|---|---|---|
+| [Quickshell](https://quickshell.org/) | Shell runtime | Required |
+| [Cava](https://github.com/karlstav/cava) | Audio visualizer | Required for visualizer |
+| [awww](https://github.com/LGFae/awww) | Wallpaper application and transitions | Required for wallpaper changes |
+| [Matugen](https://github.com/InioX/matugen) | Wallpaper-derived palettes | Required for dynamic theming |
+| ImageMagick | Wallpaper color extraction | Required for palette extraction |
+| Python 3 | Weather helper and configuration utilities | Required |
+| `wpctl` (WirePlumber) | Volume controls | Required for provided volume helper |
+| `brightnessctl` | Brightness controls | Required for provided brightness helper |
+| `hyprsunset` | Night Light on Hyprland | Optional |
+| `gammastep` | Night Light on niri | Optional |
+| `udisksctl` / UDisks2 | Ejecting removable storage | Optional |
 
-> **Note:** Night Light is optional. Install `hyprsunset` on Hyprland or `gammastep` on niri — the Control Center card only appears once the matching tool is installed.
+Package names vary by distribution. Install the tools through your distribution's package manager.
 
 ## Installation
 
-### 1. Clone the repository
+### 1. Install dependencies
 
-If you already use Quickshell, it's recommended to back up your existing configuration before replacing it.
+Install Quickshell and the utilities for the features you intend to use. Make sure the Quickshell command `qs` is available.
+
+### 2. Get Flui
+
+Back up an existing Quickshell configuration before replacing it:
 
 ```bash
 mv ~/.config/quickshell ~/.config/quickshell.backup
 ```
 
-Clone Luci into your Quickshell configuration directory:
+Clone this repository into the standard configuration directory:
 
 ```bash
-cd ~/.config
-git clone https://github.com/ElhamSadiqi/Luci.git quickshell
+git clone https://github.com/caveman210/Flui.git ~/.config/quickshell
 ```
 
----
-
-### 2. Launch Luci
-
-Start Luci manually:
+### 3. Launch
 
 ```bash
-qs -c ~/.config/quickshell & disown
+qs -c ~/.config/quickshell
 ```
 
-At this point, Luci is fully functional as a standalone Quickshell shell.
-
-The Dynamic Island, media controls, clock, status indicators, and all core components will work immediately.
-
-> **Tip**
->
-> If you're currently using a bar at the top of your screen, you may want to stop it temporarily while testing Luci. This simply provides a cleaner preview — if your current bar is positioned elsewhere, you can safely ignore this step.
-
----
-
-### 3. Configure your compositor
-
-Luci does not register compositor keybindings by itself. Views such as the Power Menu, Wallpaper Selector and Theme Selector are opened through Luci's IPC interface, and the volume/brightness keys are routed through Luci's helper scripts.
+### 4. Start automatically
 
 #### Hyprland
 
-If you use **`hyprland.conf`**, add:
+Add to your Hyprland configuration:
 
 ```ini
+exec-once = qs -c ~/.config/quickshell
+exec-once = awww-daemon
+
 bind = mainMod, P, exec, qs ipc call flui openPowerMenu
 bind = mainMod, W, exec, qs ipc call flui openWallpaperSelector
 bind = mainMod, T, exec, qs ipc call flui openThemeSelector
 ```
 
-If you use **`hyprland.lua`**, add:
-
-```lua
-hl.bind(mainMod .. " + P",
-    hl.dsp.exec_cmd("qs ipc call flui openPowerMenu"))
-
-hl.bind(mainMod .. " + W",
-    hl.dsp.exec_cmd("qs ipc call flui openWallpaperSelector"))
-
-hl.bind(mainMod .. " + T",
-    hl.dsp.exec_cmd("qs ipc call flui openThemeSelector"))
-```
+For Lua-based Hyprland configurations, an example modular configuration is included under `config/hypr/`. Integrate it with your existing setup rather than overwriting it blindly.
 
 #### niri
 
-A ready-made block ships in [`config/niri/luci.kdl`](config/niri/luci.kdl). Include it from your config:
+A ready-made integration block is included:
 
 ```kdl
-include "~/.config/quickshell/config/niri/luci.kdl"
+include "~/.config/quickshell/config/niri/flui.kdl"
 ```
 
-Or copy the blocks into your own `~/.config/niri/config.kdl`:
+It starts Quickshell and the awww daemon and provides example panel and media-key bindings. You can also copy the relevant entries into your own `config.kdl`.
 
-```kdl
-spawn-at-startup "qs"
-spawn-at-startup "awww-daemon"
 
-binds {
-    Mod+P { spawn "qs" "ipc" "call" "luci" "openPowerMenu"; }
-    Mod+W { spawn "qs" "ipc" "call" "luci" "openWallpaperSelector"; }
-    Mod+T { spawn "qs" "ipc" "call" "luci" "openThemeSelector"; }
-}
+## Configuration
+
+User settings live in:
+
+```text
+~/.config/quickshell/
+└── settings.json
 ```
 
-> niri's `spawn` does not expand `~`, so the volume/brightness binds below use `spawn-sh`.
+Flui creates and updates `settings.json` automatically as you change settings in the interface. To pre-configure or inspect the schema, copy the provided template:
 
-#### Volume & Brightness
-
-Luci displays a temporary status notification whenever your volume or brightness changes. To enable this, route your multimedia keys through Luci's helper scripts.
-
-Hyprland — **`hyprland.conf`**:
-
-```ini
-# Volume
-bindel = , XF86AudioRaiseVolume, exec, ~/.config/quickshell/scripts/volume.sh up
-bindel = , XF86AudioLowerVolume, exec, ~/.config/quickshell/scripts/volume.sh down
-bindl  = , XF86AudioMute, exec, ~/.config/quickshell/scripts/volume.sh mute
-
-# Brightness
-bindel = , XF86MonBrightnessUp, exec, ~/.config/quickshell/scripts/brightness.sh +5%
-bindel = , XF86MonBrightnessDown, exec, ~/.config/quickshell/scripts/brightness.sh 5%-
+```bash
+cp ~/.config/quickshell/settings.json.example ~/.config/quickshell/settings.json
 ```
 
-Hyprland — **`hyprland.lua`**:
+The configuration controls:
 
-```lua
-hl.bind("XF86AudioRaiseVolume",
-    hl.dsp.exec_cmd("~/.config/quickshell/scripts/volume.sh up"),
-    { locked = true, repeating = true })
+- Weather provider, location, and refresh interval
+- Initial layout, bar placement, and information rotation
+- Auto-hide and Do Not Disturb
+- Wallpaper directory, shuffle interval, and transition
+- Matugen and permitted themed applications
+- Night Light schedule, target temperature, and transition curve
+- First-run state
 
-hl.bind("XF86AudioLowerVolume",
-    hl.dsp.exec_cmd("~/.config/quickshell/scripts/volume.sh down"),
-    { locked = true, repeating = true })
+For most users, the in-app Settings panel is the easiest way to configure Flui. Avoid editing `settings.json` while the shell is running.
 
-hl.bind("XF86AudioMute",
-    hl.dsp.exec_cmd("~/.config/quickshell/scripts/volume.sh mute"),
-    { locked = true })
+### Wallpapers
 
-hl.bind("XF86MonBrightnessUp",
-    hl.dsp.exec_cmd("~/.config/quickshell/scripts/brightness.sh +5%"),
-    { locked = true, repeating = true })
+Flui reads image files directly from the configured wallpaper directory. If no directory is configured, it checks these locations in order:
 
-hl.bind("XF86MonBrightnessDown",
-    hl.dsp.exec_cmd("~/.config/quickshell/scripts/brightness.sh 5%-"),
-    { locked = true, repeating = true })
+1. `$XDG_PICTURES_DIR/Wallpapers`
+2. `~/Wallpapers`
+3. `$XDG_PICTURES_DIR`
+
+Supported formats: JPG, JPEG, PNG, WebP, and GIF. Configure `wallpaperDir` via Settings or in `settings.json` to choose another directory.
+
+The wallpaper backend must be running:
+
+```bash
+awww-daemon
 ```
 
-niri — **`config.kdl`**:
+### Night Light
 
-```kdl
-binds {
-    XF86AudioRaiseVolume repeat=true allow-when-locked=true { spawn-sh "~/.config/quickshell/scripts/volume.sh up"; }
-    XF86AudioLowerVolume repeat=true allow-when-locked=true { spawn-sh "~/.config/quickshell/scripts/volume.sh down"; }
-    XF86AudioMute allow-when-locked=true { spawn-sh "~/.config/quickshell/scripts/volume.sh mute"; }
-    XF86MonBrightnessUp repeat=true allow-when-locked=true { spawn-sh "~/.config/quickshell/scripts/brightness.sh +5%"; }
-    XF86MonBrightnessDown repeat=true allow-when-locked=true { spawn-sh "~/.config/quickshell/scripts/brightness.sh 5%-"; }
-}
-```
+- **Hyprland:** `hyprsunset`
+- **niri:** `gammastep`
 
-Without these bindings, your volume and brightness keys may still function, but Luci won't receive the events required to display its notifications.
+Install the matching utility. The Night Light control is unavailable when its backend is missing.
 
-You are free to use any keybindings that fit your workflow — Luci only exposes the IPC commands and helper scripts, and how they are triggered is up to your compositor configuration.
+### Hyprland theme synchronization
 
-### 4. Wallpaper Backend
+Flui can synchronize selected theme settings with Hyprland. The included example under `config/hypr/` expects a modular configuration; it is not designed to rewrite an arbitrary monolithic `hyprland.conf` or `hyprland.lua`.
 
-Luci uses **Awww** to apply wallpapers.
+On niri, theme selection changes Flui's own appearance. Compositor theme synchronization is currently Hyprland-specific.
 
-If you want the Wallpaper Selector to update your wallpaper, make sure the daemon is running.
+## Using Flui
 
-If you use **`hyprland.conf`**, add:
+### Layouts
 
-```ini
-exec-once = awww-daemon
-```
-
-If you use **`hyprland.lua`**, add:
-
-```lua
-hl.exec_cmd("awww-daemon")
-```
-
-On niri, `spawn-at-startup "awww-daemon"` (already in `config/niri/luci.kdl`).
-
-Without the daemon, the Wallpaper Selector will still display your wallpapers, but selecting one will have no effect.
-
-## Layouts
-
-Luci's island has three layouts, cycled with:
+Change the layout in the interface or run:
 
 ```bash
 qs ipc call flui cycleLayout
 ```
 
-- **Pill** — a compact clock capsule. Hovering expands it in place.
-- **Notch** — a wider capsule flush with the top edge, for a notch-style display.
-- **Bar** — a full-width bar: media on the left, the clock in the center, tray + status on the right.
+### IPC commands
 
-In the bar layout the clock and the right cluster each drop a panel; the panels dock to the bar with the same flow-corner treatment as the bar itself edges into the monitor.
+Flui exposes an IPC target named `flui`:
 
-## Theme Synchronization (Hyprland only, optional)
+| Command | Action |
+|---|---|
+| `openExpandedHome` | Open the expanded home view |
+| `openControlCenter` | Open Control Center |
+| `openPowerMenu` | Open the power menu |
+| `openWallpaperSelector` | Open wallpaper selector |
+| `openThemeSelector` | Open theme selector |
+| `openWifiMenu` | Open Wi-Fi menu |
+| `openBluetoothMenu` | Open Bluetooth menu |
+| `openMedia` | Open media controls |
+| `openNotifications` | Open notification history |
+| `cycleLayout` | Cycle Pill → Notch → Bar |
+| `focusToggle` | Toggle Focus |
+| `reset` | Return to the idle island |
 
-By default, Luci only changes its own appearance.
-
-If you want Luci to also update **Hyprland's appearance** (borders, gaps, rounding, blur, shadows, opacity, etc.), your Hyprland configuration **must be modular**.
-
-Luci cannot modify a single `hyprland.conf` or `hyprland.lua` containing all of your settings.
-
-Instead, your main `hyprland.lua` should simply load smaller modules, for example:
-
-```lua
-require("core.monitors")
-require("core.env")
-require("core.appearance")
-require("core.keybinds")
-require("core.programs")
-require("core.input")
-require("core.windows")
-require("core.misc")
-require("core.autostart")
-```
-
-A complete modular Hyprland configuration is included in:
-
-```text
-~/.config/quickshell/config/hypr/
-```
-
-If you don't already have a modular setup, simply move it to:
-
-```text
-~/.config/hypr/
-```
-
-and reload Hyprland:
+Example:
 
 ```bash
-hyprctl reload
+qs ipc call flui openPowerMenu
 ```
 
-### First Theme Switch
+See [docs/IPC.md](docs/IPC.md) for the IPC reference and compositor binding examples.
 
-The first time you switch a theme from Luci, it automatically creates:
+### Interaction and keyboard navigation
+
+- In Pill and Notch layouts, hover over the island to expand it.
+- Click an empty area of the expanded island to pin or unpin it.
+- In Bar layout, the clock and status sections open their own dropdowns.
+- Open media controls from the media section.
+
+## Nix and Home Manager
+
+The repository provides a Nix flake with package outputs for `x86_64-linux` and `aarch64-linux`, plus a Home Manager module.
+
+The module exposes:
+
+- `programs.flui.enable`
+- `programs.flui.package`
+- `programs.flui.systemd.enable`
+
+The optional systemd user service starts Flui with `graphical-session.target`. Refer to [flake.nix](flake.nix) and [package.nix](package.nix) for the current packaging implementation.
+
+## Project structure
 
 ```text
-~/.config/hypr/current-theme/theme.lua
+shell.qml       Quickshell entry point
+core/           Shared state, controllers, and status management
+island/         Island state, interaction, and view hosting
+services/       System data providers and compositor integrations
+windows/        Layer-shell windows and edge trigger
+views/          Pill, Notch, Bar, and panel interfaces
+components/     Reusable interface components
+styles/         Shared style constants and theme definitions
+config/         Settings store and compositor examples
+scripts/        System-integration helpers
+assets/         Icons and supporting assets
+docs/           Architecture notes and IPC reference
 ```
 
-This file is a symbolic link pointing to the currently selected theme.
+Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for module responsibilities and development conventions.
 
-Until this first theme switch happens, Hyprland may report an error because `current-theme/theme.lua` does not yet exist.
+## Troubleshooting
 
-This is expected.
-
-Simply open the Theme Selector and switch to any theme once. Luci will automatically create the required symbolic link and the error will disappear.
-
-After that, every theme change will automatically update Hyprland's appearance.
-
-> **Note**
->
-> The `~/.config/quickshell/config/hypr/` directory is only an example configuration included with Luci.
->
-> If you already have your own modular Hyprland setup, you can ignore it and integrate Luci however you prefer.
->
-> On niri, theme switching restyles Luci itself; niri has no equivalent theme sync.
-
-## Wallpaper Selector
-
-Luci lists wallpapers straight from:
-
-```text
-~/Pictures/Wallpapers
-```
-
-Copy your wallpapers there (`.jpg`, `.jpeg`, `.png`, `.webp` or `.gif`) and they'll appear in the selector automatically.
-
-There is no metadata file and no per-theme wallpaper mapping — wallpapers are just whatever sits in that folder. Selecting one applies it with **Awww** and shows a short toast with the file name on the island.
-
-> **Roadmap**
->
-> Styling and theming are planned to move to a matugen-style dynamic color pipeline — colors (and possibly the wallpaper) derived from your current wallpaper instead of hardcoded per-theme values. Not implemented yet; the selector above is the current behavior.
-
-## Using Luci
-
-Luci is designed around a simple interaction model. Most actions can be performed using either the keyboard or the mouse.
-
-## Dynamic Island
-
-When Luci starts, the Dynamic Island displays the compact clock.
-
-### Expanding the Island
-
-- Hover over the island to reveal the expanded view (Pill and Notch layouts).
-- Clicking an **empty area** of the expanded view toggles whether it is pinned.
-
-When the expanded view is:
-
-- **Pinned:** it stays open even after moving the mouse away.
-- **Unpinned:** it automatically returns to the compact clock when the cursor leaves the island.
-
-In the **Bar** layout the island is always visible. The clock and the right-hand status cluster each open their own dropdown panel; clicking an empty area of the bar dismisses them.
-
-## Media Controls
-
-When an MPRIS-compatible media player (such as Firefox, Spotify, VLC, etc.) is playing media, Luci makes Media Controls available.
-
-To open the Media Controls:
-
-- **Pill / Notch:** hover to expand, then click the **left section** (the Now Playing area).
-- **Bar:** click the media line on the left of the bar.
-- From anywhere: `qs ipc call flui openMedia`.
-
-The Media Controls display:
-
-- Album artwork
-- Song title and artist
-- Animated waveform visualizer
-- Playback progress
-- Previous / Play-Pause / Next controls
-
-## Control Center
-
-The Control Center holds the everyday toggles: **Wi-Fi**, **Bluetooth**, **Mic**, **Night Light**, **Wallpaper**, **Focus**, **Auto-Hide** and the **Layout** switcher.
-
-- **Pill / Notch:** open it from the right-hand cluster of the expanded view. It also shows the volume and brightness sliders and your notifications.
-- **Bar:** click the Wi-Fi/Bluetooth/battery cluster on the right. The bar's Control Center shows the storage card; the volume and brightness sliders live in the clock dropdown instead.
-
-## Keyboard Navigation
-
-Luci supports Vim-inspired keyboard navigation in supported views such as the Theme Selector, Wallpaper Selector, and Power Menu.
-
-| Action | Keys |
-|--------|------|
-| Move Left | **H** or **←** |
-| Move Right | **L** or **→** |
-| Move Up | **K** or **↑** |
-| Move Down | **J** or **↓** |
-| Confirm / Apply | **Enter** |
-| Close View | **Esc** |
-
-Pressing **Enter** activates the currently selected item.
-
-For example:
-
-- Apply a theme in the Theme Selector.
-- Apply a wallpaper in the Wallpaper Selector.
-- Confirm an action in the Power Menu.
-
-## Status Notifications
-
-Luci provides temporary notifications whenever your system volume, brightness, or workspace changes.
-
-The behavior depends on the current layout:
-
-- **Pill / Notch:** the clock is temporarily replaced with the notification.
-- **Bar:** the notification appears as a **Status Chip** on the right side of the bar, leaving the rest of the interface visible.
-- **Bar, clock dropdown open:** while the volume/brightness sliders are on screen they are the feedback, so the status notification is skipped.
-
-After a short delay, the notification automatically disappears and Luci returns to its normal state.
-
-## Night Light
-
-The Night Light card toggles a warm color temperature:
-
-- **Hyprland:** `hyprsunset`
-- **niri:** `gammastep`
-
-Luci checks the actual backend state before toggling, so the card always reflects whether the screen is warm or neutral, and it won't leave duplicate or zombie processes behind.
-
-## Documentation
-
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — module map and conventions.
-- [`docs/IPC.md`](docs/IPC.md) — the full `luci` IPC surface.
-
-## Daily Driver
-
-If you've finished testing Luci and would like it to start automatically whenever you log in, configure your compositor to launch it during startup.
-
-### If you use `hyprland.conf`, add:
-
-```ini
-exec-once = qs -c ~/.config/quickshell
-```
-
-### If you use `hyprland.lua`, add the following line inside your existing `hyprland.start` callback:
-
-```lua
-hl.exec_cmd("qs -c ~/.config/quickshell")
-```
-
-For example:
-
-```lua
-hl.on("hyprland.start", function()
-    -- your existing startup commands
-
-    hl.exec_cmd("qs -c ~/.config/quickshell")
-end)
-```
-
-On niri, `spawn-at-startup "qs"` (already in `config/niri/luci.kdl`).
-
-Once configured, Luci will automatically start every time you begin a session.
-
-If you're still experimenting or prefer running it manually, you can launch it at any time:
-
-```bash
-qs -c ~/.config/quickshell & disown
-```
+- **Nothing appears:** launch with `qs -c ~/.config/quickshell` from a terminal and inspect output for QML errors or missing commands.
+- **Wallpaper selection does not apply:** check that `awww-daemon` is running and that the configured directory contains supported image files.
+- **Volume feedback is missing:** bind the provided `scripts/volume.sh` helper; it changes volume and writes the event used by Flui's status notification.
+- **Brightness feedback is missing:** bind `scripts/brightness.sh` and check that `brightnessctl` can control your display.
+- **Night Light is unavailable:** install `hyprsunset` on Hyprland or `gammastep` on niri.
+- **Hyprland theme does not change:** check the modular example integration and whether the selected theme includes a Hyprland theme file.
 
 ## Credits
 
-Luci is designed and built by **[Elham Sadiqi](https://github.com/ElhamSadiqi)** — upstream repository: <https://github.com/ElhamSadiqi/Luci>.
-Inspirations taken from **[ChillPill-Shell](https://github.com/LUCKYS1NGHH/ChillPill-Shell)**, **[islandcn](https://github.com/opencoredev/islandcn)**
+Flui builds on the work and ideas of the Quickshell ecosystem and projects exploring Dynamic Island desktop interactions, including [Luci](https://github.com/ElhamSadiqi/Luci), [ChillPill-Shell](https://github.com/LUCKYS1NGHH/ChillPill-Shell), and [islandcn](https://github.com/opencoredev/islandcn).
 
-All credit for the original project goes to the authors.
+Flui's implementation, integrations, and ongoing development are maintained in this repository.
 
 ## License
 
-Luci is released under the MIT License.
-
-See the [LICENSE](LICENSE) file for the full license text.
+Flui is licensed under the [MIT License](LICENSE).

@@ -11,11 +11,18 @@
       forAllSystems = f: nixpkgs.lib.genAttrs supportedSystems (system: f (import nixpkgs { inherit system; }));
     in
     {
+      # Standard Nixpkgs Overlay
+      overlays.default = final: prev: {
+        flui = final.callPackage ./package.nix { };
+      };
+
+      # Packages
       packages = forAllSystems (pkgs: {
         default = pkgs.callPackage ./package.nix { };
         flui = pkgs.callPackage ./package.nix { };
       });
 
+      # Home Manager Module
       homeManagerModules.default = { config, lib, pkgs, ... }:
         let
           cfg = config.programs.flui;
@@ -60,5 +67,27 @@
             };
           };
         };
+
+      homeManagerModules.flui = self.homeManagerModules.default;
+
+      # NixOS Module (system-level enablement)
+      nixosModules.default = { config, lib, pkgs, ... }:
+        let
+          cfg = config.programs.flui;
+        in
+        {
+          options.programs.flui = {
+            enable = lib.mkEnableOption "Flui desktop shell";
+            package = lib.mkPackageOption self.packages.${pkgs.system} "flui" {
+              default = [ "default" ];
+            };
+          };
+
+          config = lib.mkIf cfg.enable {
+            environment.systemPackages = [ cfg.package ];
+          };
+        };
+
+      nixosModules.flui = self.nixosModules.default;
     };
 }
