@@ -13,16 +13,16 @@ hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(programs.fileManager))
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(programs.menu))
 
 hl.bind(mainMod .. " + P",
-    hl.dsp.exec_cmd("qs ipc call luci openPowerMenu"))
+    hl.dsp.exec_cmd("qs ipc call flui openPowerMenu"))
 
 hl.bind(mainMod .. " + W",
-    hl.dsp.exec_cmd("qs ipc call luci openWallpaperSelector"))
+    hl.dsp.exec_cmd("qs ipc call flui openWallpaperSelector"))
 
 hl.bind(mainMod .. " + V",
     hl.dsp.window.float({ action = "toggle" }))
 
 hl.bind(mainMod .. " + T",
-    hl.dsp.exec_cmd("qs ipc call luci openThemeSelector"))
+    hl.dsp.exec_cmd("qs ipc call flui openThemeSelector"))
 
 hl.bind(mainMod .. " + B",
     hl.dsp.exec_cmd("mkdir /tmp/zen_lock 2>/dev/null && (zen-browser; rmdir /tmp/zen_lock)"))

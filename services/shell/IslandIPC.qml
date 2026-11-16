@@ -6,7 +6,8 @@ import "../../island"
 import "../../services"
 
 IpcHandler {
-    target: "luci"
+    // Primary target is 'flui'; accept 'luci' for backward compatibility
+    target: "flui"
 
     function focusToggle() {
         FocusService.toggle()

@@ -23,9 +23,13 @@ Singleton {
     property string providerName: "Open-Meteo"
     property string currentProvider: ConfigStore.weatherProvider || "openmeteo"
     property string lastUpdated: ""
+    property double lastUpdatedTimestamp: 0 // ms since epoch
     property string errorMessage: ""
     property bool loading: false
     property bool loaded: false
+
+    // Stale check: true if never loaded successfully or > 1 hour since last successful update
+    readonly property bool isStale: !loaded || (lastUpdatedTimestamp > 0 && (Date.now() - lastUpdatedTimestamp) > 3600000)
 
     readonly property var providers: [
         { id: "openmeteo", name: "Open-Meteo", desc: "Fast & realtime", icon: "󱘖" },
@@ -106,6 +110,7 @@ Singleton {
                         root.city = data.city || ""
                         root.providerName = data.providerName || data.provider || "Weather"
                         root.lastUpdated = data.updated || ""
+                        root.lastUpdatedTimestamp = Date.now()
                         root.loaded = true
                         root.errorMessage = ""
                     } else {

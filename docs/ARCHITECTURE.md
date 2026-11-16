@@ -55,7 +55,7 @@ Data providers, one concern each, no UI.
 - `ThemeService`, `WallpaperService`, `StorageService`, `NightLightService`.
 - `StatusWatcher` — watches the event file written by `scripts/` (volume,
   brightness, workspace) and drives the OSD. The shell never polls for these.
-- `IslandIPC` — the `qs ipc call luci <fn>` surface (see `docs/IPC.md`).
+- `IslandIPC` — the `qs ipc call flui <fn>` surface (see `docs/IPC.md`).
 
 ## views/
 

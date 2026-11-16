@@ -32,13 +32,18 @@ Singleton {
         }
     }
 
+    readonly property string configDir: Quickshell.env("XDG_CONFIG_HOME") !== ""
+        ? (Quickshell.env("XDG_CONFIG_HOME") + "/quickshell")
+        : (Quickshell.env("HOME") + "/.config/quickshell")
+    readonly property string cavaConfPath: configDir + "/scripts/cava.conf"
+
     Process {
         id: cava
         running: false
         command: [
             "cava",
             "-p",
-            "scripts/cava.conf"
+            root.cavaConfPath
         ]
 
         stdout: SplitParser {

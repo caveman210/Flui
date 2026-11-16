@@ -134,8 +134,9 @@ FocusScope {
                 anchors.margins: 10
                 spacing: 12
 
-                // 1. Bar Dock Placement: Top vs Bottom
+                // 1. Bar Dock Placement: Top vs Bottom (Bar Layout Only)
                 RowLayout {
+                    visible: IslandState.layoutIsBar
                     Layout.fillWidth: true
                     spacing: 10
 
@@ -160,16 +161,17 @@ FocusScope {
                     }
                 }
 
-                // Divider line
-                Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
+                // Divider line (Bar only)
+                Rectangle { visible: IslandState.layoutIsBar; Layout.fillWidth: true; height: 1; color: Theme.border }
 
-                // 2. Bar Info Mode Cycle: Cycle / Weather / Motivation
+                // 2. Bar Info Mode Cycle: Cycle / Weather / Motivation (Bar Layout Only)
                 RowLayout {
+                    visible: IslandState.layoutIsBar
                     Layout.fillWidth: true
                     spacing: 10
 
                     Text { text: "󰔏"; font.family: Theme.iconFont; font.pixelSize: 16; color: Theme.accent }
-                    Text { text: "Bar Display Slot"; color: Theme.textPrimary; font.pixelSize: 13; Layout.fillWidth: true }
+                    Text { text: "Display Slot"; color: Theme.textPrimary; font.pixelSize: 13; Layout.fillWidth: true }
 
                     Rectangle {
                         width: 80
@@ -197,16 +199,16 @@ FocusScope {
                     }
                 }
 
-                // Divider line
-                Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
+                // Divider line (Bar only)
+                Rectangle { visible: IslandState.layoutIsBar; Layout.fillWidth: true; height: 1; color: Theme.border }
 
-                // 3. Auto-Hide Bar Toggle
+                // 3. Autohide Toggle (Shared across all layouts)
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 10
 
                     Text { text: "󰒲"; font.family: Theme.iconFont; font.pixelSize: 16; color: Theme.accent }
-                    Text { text: "Auto-Hide Bar"; color: Theme.textPrimary; font.pixelSize: 13; Layout.fillWidth: true }
+                    Text { text: "Autohide"; color: Theme.textPrimary; font.pixelSize: 13; Layout.fillWidth: true }
 
                     Rectangle {
                         width: 44

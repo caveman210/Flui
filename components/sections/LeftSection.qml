@@ -16,22 +16,12 @@ Item {
     implicitWidth: row.implicitWidth
     implicitHeight: Math.max(nowPlaying.implicitHeight, privacy.implicitHeight, 33)
 
-    // Track cycle state between 0 (Weather) and 1 (Motivation)
-    property int currentSlot: 0
-
-    Timer {
-        interval: 1800000 // 30 minutes
-        running: true
-        repeat: true
-        onTriggered: {
-            root.currentSlot = (root.currentSlot === 0) ? 1 : 0
-        }
-    }
-
+    // In Pill and Notch, Weather gets precedence unless it is too stale (> 1 hour or fetch failed)
     readonly property bool showWeatherNow: {
         if (ConfigStore.barInfoMode === "weather") return true
         if (ConfigStore.barInfoMode === "motivation") return false
-        return root.currentSlot === 0
+        // For pill / notch: show weather if fresh; fallback to motivation only if stale
+        return !WeatherService.isStale
     }
 
     RowLayout {

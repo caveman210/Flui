@@ -1,6 +1,7 @@
 import QtQuick
 import "../../core"
 import "../../island"
+import ".."
 import "../audio"
 import "../notification"
 import "../compositor/hyprland"

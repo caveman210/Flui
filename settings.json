@@ -4,8 +4,8 @@
   "weatherApiKey": "",
   "weatherPollIntervalMins": 5,
   "barInfoMode": "cycle",
-  "layout": 0,
-  "barEdgePosition": 0,
+  "layout": 1,
+  "barEdgePosition": 1,
   "autoHideBar": false,
   "dnd": false,
   "nightLightSchedule": true,
@@ -31,5 +31,23 @@
       "y": 1
     }
   ],
-  "nightLightTargetTemp": 4500
+  "nightLightTargetTemp": 4500,
+  "wallpaperShuffle": false,
+  "wallpaperShuffleInterval": "15m",
+  "wallpaperTransitionType": "center",
+  "wallpaperTransitionDuration": 2,
+  "currentWallpaper": "/home/caveman/Pictures/Wallpapers/cloudsnight.jpg",
+  "wallpaperDir": "/home/caveman/Pictures/Wallpapers",
+  "firstRunCompleted": true,
+  "matugenEnabled": true,
+  "themedApps": {
+    "quickshell": true,
+    "kitty": true,
+    "gtk": true,
+    "cava": true,
+    "zen": true,
+    "nvim": true,
+    "yazi": true,
+    "hyprlock": true
+  }
 }

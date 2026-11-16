@@ -19,7 +19,8 @@ Singleton {
     //    free, usedPercent, removable }]
     property var devices: []
 
-    readonly property int pollInterval: 10000
+    // 30s background poll; rapid refresh only when storage views open
+    readonly property int pollInterval: 30000
 
     function formatBytes(bytes) {
         var b = Number(bytes)

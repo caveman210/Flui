@@ -12,7 +12,7 @@ Environment used for the last pass: **niri 26.04 (Nixpkgs)**, single output
       `Reloading configuration…` → `Configuration Loaded`, no QML errors.
 - [x] Layout/mode are in-memory: a reload returns the island to Pill (by design).
 
-## IPC — `qs ipc call luci <command>`
+## IPC — `qs ipc call flui <command>`
 
 All commands exit `0`.
 

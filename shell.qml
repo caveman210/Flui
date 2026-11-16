@@ -19,6 +19,7 @@ ShellRoot {
     IslandWindow {}
     OsdWindow {}
     EdgeTriggerWindow {}
+    FirstRunWindow {}
 
     // Singletons are lazy; referencing them here instantiates them at
     // startup. NotificationService must exist immediately so its

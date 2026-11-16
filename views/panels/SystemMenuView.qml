@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 
 import "../../core"
+import "../../services"
 import "../../services/system"
 import "../../styles"
 
@@ -189,6 +190,92 @@ FocusScope {
                                 font.pixelSize: 12
                                 elide: Text.ElideRight
                                 wrapMode: Text.NoWrap
+                            }
+                        }
+                    }
+
+                    // Divider before Disk Storage section
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 1
+                        color: Qt.rgba(1, 1, 1, 0.06)
+                        visible: StorageService.devices.length > 0
+                    }
+
+                    // Disk Usage Section with Progress Bars
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+                        visible: StorageService.devices.length > 0
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Text {
+                                text: "Storage"
+                                font.pixelSize: 11
+                                font.bold: true
+                                color: Theme.accent
+                                Layout.preferredWidth: 88
+                            }
+                            Text {
+                                text: "Mounted Disks"
+                                font.pixelSize: 10
+                                color: Theme.textMuted
+                                Layout.fillWidth: true
+                            }
+                        }
+
+                        Repeater {
+                            model: StorageService.devices
+
+                            delegate: ColumnLayout {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                spacing: 4
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    Text {
+                                        text: (modelData.mountpoint || modelData.name)
+                                        font.pixelSize: 11
+                                        font.bold: true
+                                        color: Theme.textPrimary
+                                        elide: Text.ElideMiddle
+                                        Layout.fillWidth: true
+                                    }
+                                    Text {
+                                        text: (modelData.used || "--") + " / " + (modelData.size || "--") + " (" + (modelData.usedPercent !== null ? modelData.usedPercent + "%" : "--") + ")"
+                                        font.pixelSize: 11
+                                        color: Theme.textSecondary
+                                    }
+                                }
+
+                                // Storage Loader / Progress Bar
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    height: 6
+                                    radius: 3
+                                    color: Theme.surfaceVariant
+
+                                    Rectangle {
+                                        width: Math.max(6, Math.min(parent.width, parent.width * ((modelData.usedPercent || 0) / 100.0)))
+                                        height: parent.height
+                                        radius: 3
+                                        color: {
+                                            var pct = modelData.usedPercent || 0
+                                            if (pct >= 90) return Theme.danger
+                                            if (pct >= 75) return Theme.warning
+                                            return Theme.accent
+                                        }
+
+                                        Behavior on width {
+                                            NumberAnimation {
+                                                duration: Theme.animationNormal
+                                                easing.type: Easing.OutCubic
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

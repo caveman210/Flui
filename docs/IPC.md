@@ -3,7 +3,7 @@
 Luci exposes one IPC target, `luci`. Call it from anywhere:
 
 ```bash
-qs ipc call luci <command>
+qs ipc call flui <command>
 ```
 
 | Command | Effect |
@@ -26,9 +26,9 @@ qs ipc call luci <command>
 Hyprland (`hyprland.lua`):
 
 ```lua
-hl.bind("SUPER + P", hl.dsp.exec_cmd("qs ipc call luci openPowerMenu"))
-hl.bind("SUPER + W", hl.dsp.exec_cmd("qs ipc call luci openWallpaperSelector"))
-hl.bind("SUPER + T", hl.dsp.exec_cmd("qs ipc call luci openThemeSelector"))
+hl.bind("SUPER + P", hl.dsp.exec_cmd("qs ipc call flui openPowerMenu"))
+hl.bind("SUPER + W", hl.dsp.exec_cmd("qs ipc call flui openWallpaperSelector"))
+hl.bind("SUPER + T", hl.dsp.exec_cmd("qs ipc call flui openThemeSelector"))
 ```
 
 niri (`config.kdl`):

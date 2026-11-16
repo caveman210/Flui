@@ -1,26 +1,28 @@
-# Luci
+# Flui
 
-Luci is a minimalist Dynamic Island built with Quickshell for Hyprland and niri.
+Flui is a fluid, minimalist Dynamic Island and desktop shell built with Quickshell for Hyprland and niri.
 
-Unlike many desktop shell projects that aim to manage every aspect of the desktop, Luci focuses on a small set of everyday interactions. It provides quick access to the features you use most while remaining lightweight, keyboard-friendly, and easy to extend.
-
-The goal is simplicity rather than feature overload.
+Unlike rigid desktop bars or overweight desktop environments, Flui adapts dynamically to your workflow. It morphs fluidly between Pill, Notch, and Bar layouts, extracts ambient color schemes from your wallpapers via Matugen, and stays keyboard-friendly, fast, and lightweight.
 
 ## Features
 
 -  Three island layouts — Pill, Notch and Bar — cycled at runtime
 -  Flow corners: the bar and its dropdowns blend into the monitor edges
--  Dynamic theme switching
--  Wallpaper selector
+-  Dynamic Matugen theme generation & wallpaper-driven color engine
+-  3-Column Tiled Wallpaper Picker with live 5-second ephemeral preview and auto-revert
+-  Configurable automatic wallpaper shuffling (custom intervals from 15m to 1d) with transitions (`awww`)
+-  Custom color palette tuning & wallpaper-dominant color swatch picker (ephemeral live edits)
+-  Systray icon grid with integrated Notification bell divider and drill-in DBus menu
+-  Weather panel with multi-provider integration (Open-Meteo, wttr.in, MET Norway, Aggregator)
+-  Night Light scheduling with custom Bezier curves and temperature tuning
+-  Real-time Cava audio visualizer with synchronized track title & artist display
 -  Rich media controls with waveform progress
 -  Control Center with Wi-Fi / Bluetooth / Mic / Night Light / Focus cards and a storage card in the bar
--  Volume and brightness sliders
--  Volume and brightness notifications (OSD)
--  Status notifications (workspace, device connect/disconnect)
+-  Volume and brightness sliders with OSD notifications
+-  Status notifications (workspace, device connect/disconnect, battery alerts)
 -  Notification history (per-day, with avatars)
--  Battery status
--  Wi-Fi status
--  Real-time CAVA visualizer
+-  Battery status with low-battery priority indicators
+-  Wi-Fi and Bluetooth status
 -  Power menu
 -  Vim-inspired keyboard navigation
 
@@ -85,22 +87,22 @@ Luci does not register compositor keybindings by itself. Views such as the Power
 If you use **`hyprland.conf`**, add:
 
 ```ini
-bind = mainMod, P, exec, qs ipc call luci openPowerMenu
-bind = mainMod, W, exec, qs ipc call luci openWallpaperSelector
-bind = mainMod, T, exec, qs ipc call luci openThemeSelector
+bind = mainMod, P, exec, qs ipc call flui openPowerMenu
+bind = mainMod, W, exec, qs ipc call flui openWallpaperSelector
+bind = mainMod, T, exec, qs ipc call flui openThemeSelector
 ```
 
 If you use **`hyprland.lua`**, add:
 
 ```lua
 hl.bind(mainMod .. " + P",
-    hl.dsp.exec_cmd("qs ipc call luci openPowerMenu"))
+    hl.dsp.exec_cmd("qs ipc call flui openPowerMenu"))
 
 hl.bind(mainMod .. " + W",
-    hl.dsp.exec_cmd("qs ipc call luci openWallpaperSelector"))
+    hl.dsp.exec_cmd("qs ipc call flui openWallpaperSelector"))
 
 hl.bind(mainMod .. " + T",
-    hl.dsp.exec_cmd("qs ipc call luci openThemeSelector"))
+    hl.dsp.exec_cmd("qs ipc call flui openThemeSelector"))
 ```
 
 #### niri
@@ -210,7 +212,7 @@ Without the daemon, the Wallpaper Selector will still display your wallpapers, b
 Luci's island has three layouts, cycled with:
 
 ```bash
-qs ipc call luci cycleLayout
+qs ipc call flui cycleLayout
 ```
 
 - **Pill** — a compact clock capsule. Hovering expands it in place.
@@ -329,7 +331,7 @@ To open the Media Controls:
 
 - **Pill / Notch:** hover to expand, then click the **left section** (the Now Playing area).
 - **Bar:** click the media line on the left of the bar.
-- From anywhere: `qs ipc call luci openMedia`.
+- From anywhere: `qs ipc call flui openMedia`.
 
 The Media Controls display:
 

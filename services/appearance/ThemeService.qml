@@ -107,6 +107,10 @@ Singleton {
     }
 
     function _addThemeEntry(themeId) {
+        // Skip matugen directory since matugen is dynamic and loaded via reloadMatugenFile()
+        if (themeId === "matugen")
+            return
+
         const component = Qt.createComponent(
             "../../styles/themes/" + themeId + "/Theme.qml"
         )

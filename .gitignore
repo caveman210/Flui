@@ -1,0 +1,7 @@
+# Local user settings and secrets
+.env
+settings.json
+*.tmp
+result
+result-*
+.direnv/
