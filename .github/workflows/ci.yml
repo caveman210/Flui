@@ -36,10 +36,11 @@ jobs:
             fi
           done
 
-      - name: Validate Settings Template
+      - name: Validate Templates
         run: |
-          echo "Verifying settings.json.example..."
+          echo "Verifying settings.json.example and matugen Theme.qml.example..."
           test -f settings.json.example || exit 1
+          test -f styles/themes/matugen/Theme.qml.example || exit 1
           python3 -c "
           import json
           with open('settings.json.example') as f:

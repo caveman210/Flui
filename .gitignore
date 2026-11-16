@@ -1,5 +1,6 @@
 # Local user settings and secrets
 settings.json
+styles/themes/matugen/Theme.qml
 *.tmp
 result
 result-*

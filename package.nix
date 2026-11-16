@@ -47,12 +47,21 @@ stdenvNoCC.mkDerivation {
     CONFIG_DIR="''${XDG_CONFIG_HOME:-$HOME/.config}/quickshell"
     mkdir -p "$CONFIG_DIR"
 
-    # Initialize settings.json from template on first run if missing
+    # Initialize settings.json and matugen Theme.qml from templates on first run if missing
     if [ ! -f "$CONFIG_DIR/settings.json" ]; then
       if [ -f "$CONFIG_DIR/settings.json.example" ]; then
         cp "$CONFIG_DIR/settings.json.example" "$CONFIG_DIR/settings.json"
       elif [ -f "@FLUI_SHARE@/settings.json.example" ]; then
         cp "@FLUI_SHARE@/settings.json.example" "$CONFIG_DIR/settings.json"
+      fi
+    fi
+
+    mkdir -p "$CONFIG_DIR/styles/themes/matugen"
+    if [ ! -f "$CONFIG_DIR/styles/themes/matugen/Theme.qml" ]; then
+      if [ -f "$CONFIG_DIR/styles/themes/matugen/Theme.qml.example" ]; then
+        cp "$CONFIG_DIR/styles/themes/matugen/Theme.qml.example" "$CONFIG_DIR/styles/themes/matugen/Theme.qml"
+      elif [ -f "@FLUI_SHARE@/styles/themes/matugen/Theme.qml.example" ]; then
+        cp "@FLUI_SHARE@/styles/themes/matugen/Theme.qml.example" "$CONFIG_DIR/styles/themes/matugen/Theme.qml"
       fi
     fi
 
