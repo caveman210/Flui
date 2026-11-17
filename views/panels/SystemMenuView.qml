@@ -26,7 +26,7 @@ FocusScope {
     // is the art + info row; the outer chrome is 22px layout margins
     // plus 14px card padding on each side (72px total).
     implicitWidth: Math.min(
-        Math.max(560, Math.ceil(content.implicitWidth) + 72),
+        Math.max(480, Math.ceil(content.implicitWidth) + 72),
         0.92 * screenWidth
     )
 
@@ -208,21 +208,11 @@ FocusScope {
                         spacing: 8
                         visible: StorageService.devices.length > 0
 
-                        RowLayout {
-                            Layout.fillWidth: true
-                            Text {
-                                text: "Storage"
-                                font.pixelSize: 11
-                                font.bold: true
-                                color: Theme.accent
-                                Layout.preferredWidth: 88
-                            }
-                            Text {
-                                text: "Mounted Disks"
-                                font.pixelSize: 10
-                                color: Theme.textMuted
-                                Layout.fillWidth: true
-                            }
+                        Text {
+                            text: "Storage"
+                            font.pixelSize: 11
+                            font.bold: true
+                            color: Theme.accent
                         }
 
                         Repeater {
@@ -244,7 +234,7 @@ FocusScope {
                                         Layout.fillWidth: true
                                     }
                                     Text {
-                                        text: (modelData.used || "--") + " / " + (modelData.size || "--") + " (" + (modelData.usedPercent !== null ? modelData.usedPercent + "%" : "--") + ")"
+                                        text: (StorageService.formatBytes(modelData.used) || "--") + " / " + (StorageService.formatBytes(modelData.size) || "--") + " (" + (modelData.usedPercent !== undefined ? Math.round(modelData.usedPercent) + "%" : "--") + ")"
                                         font.pixelSize: 11
                                         color: Theme.textSecondary
                                     }

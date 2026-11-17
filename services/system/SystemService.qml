@@ -36,7 +36,7 @@ Singleton {
     // A fetch is in flight (the refresh button shows a busy label).
     property bool refreshing: false
 
-    readonly property string osIcon: root.iconFor(root.osId)
+    readonly property string osIcon: "\uf109"
 
     readonly property bool available: root.loaded
 
