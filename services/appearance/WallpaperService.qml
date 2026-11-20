@@ -63,58 +63,24 @@ Singleton {
     Process {
         id: scanProcess
         command: [
-            "bash",
-            "-c",
-            "WP_DIR=\"" + (ConfigStore.wallpaperDir || "").replace("~", Quickshell.env("HOME")) + "\"; \
-            if [ -z \"$WP_DIR\" ] || [ ! -d \"$WP_DIR\" ]; then \
-                WP_DIR=\"${XDG_PICTURES_DIR:-$HOME/Pictures}/Wallpapers\"; \
-                [ ! -d \"$WP_DIR\" ] && WP_DIR=\"$HOME/Wallpapers\"; \
-                [ ! -d \"$WP_DIR\" ] && WP_DIR=\"${XDG_PICTURES_DIR:-$HOME/Pictures}\"; \
-            fi; \
-            find -L \"$WP_DIR\" -maxdepth 1 -type f \\( \
-                -iname '*.jpg'  -o \
-                -iname '*.jpeg' -o \
-                -iname '*.png'  -o \
-                -iname '*.webp' -o \
-                -iname '*.gif' \
-            \\) 2>/dev/null | sort"
+            Quickshell.env("HOME") + "/.config/quickshell/helpers/target/release/flui-helper",
+            "wallpapers",
+            (ConfigStore.wallpaperDir || "").replace("~", Quickshell.env("HOME"))
         ]
 
-        stdout: SplitParser {
-            splitMarker: "\n"
-
-            onRead: function(line) {
-                let path = line.trim()
-                if (path.length === 0)
-                    return
-                root._scannedPaths.push(path)
-            }
-        }
-
-        onStarted: {
-            root._scannedPaths = []
-        }
-
-        onExited: function(exitCode, exitStatus) {
-            if (exitCode !== 0)
-                return
-
-            let changed = root.wallpapers.count !== root._scannedPaths.length
-            if (!changed) {
-                for (let i = 0; i < root._scannedPaths.length; i++) {
-                    if (root.wallpapers.get(i).path !== root._scannedPaths[i]) {
-                        changed = true
-                        break
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    var items = JSON.parse(text.trim())
+                    root.wallpapers.clear()
+                    for (var i = 0; i < items.length; i++) {
+                        root.wallpapers.append({
+                            path: items[i].path,
+                            name: items[i].name
+                        })
                     }
-                }
-            }
-
-            if (changed) {
-                root.wallpapers.clear()
-                for (let i = 0; i < root._scannedPaths.length; i++) {
-                    root.wallpapers.append({
-                        path: root._scannedPaths[i]
-                    })
+                } catch (e) {
+                    console.warn("WallpaperService: error parsing flui-helper output", e)
                 }
             }
         }

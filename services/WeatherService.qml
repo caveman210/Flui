@@ -51,14 +51,14 @@ Singleton {
         loading = true
         errorMessage = ""
 
-        var prov = ConfigStore.weatherProvider || "openmeteo"
+        var prov = ConfigStore.weatherProvider || "aggregator"
         var loc = ConfigStore.weatherLocation ? ConfigStore.weatherLocation.trim() : ""
-        var cfg = Quickshell.env("XDG_CONFIG_HOME") !== ""
-            ? (Quickshell.env("XDG_CONFIG_HOME") + "/quickshell")
-            : (Quickshell.env("HOME") + "/.config/quickshell")
-        var scriptPath = cfg + "/scripts/weather-fetch.py"
-
-        fetchProc.command = ["python3", scriptPath, prov, loc]
+        fetchProc.command = [
+            Quickshell.env("HOME") + "/.config/quickshell/helpers/target/release/flui-helper",
+            "weather",
+            prov,
+            loc
+        ]
         fetchProc.running = false
         fetchProc.running = true
     }

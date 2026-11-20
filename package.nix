@@ -1,6 +1,6 @@
 {
   lib,
-  stdenvNoCC,
+  rustPlatform,
   makeWrapper,
   quickshell,
   awww,
@@ -8,13 +8,12 @@
   imagemagick,
   cava,
   bash,
-  python3,
   coreutils,
   findutils,
   gnugrep,
 }:
 
-stdenvNoCC.mkDerivation {
+rustPlatform.buildRustPackage {
   pname = "flui";
   version = "0.1.0";
 
@@ -31,15 +30,20 @@ stdenvNoCC.mkDerivation {
         && base != "result";
   };
 
+  sourceRoot = "source/helpers";
+  cargoLock.lockFile = ./helpers/Cargo.lock;
+
   nativeBuildInputs = [ makeWrapper ];
 
-  installPhase = ''
-    runHook preInstall
-
+  postInstall = ''
     mkdir -p "$out/share/flui" "$out/bin"
-    cp -r * "$out/share/flui/"
+    cp -r ../* "$out/share/flui/"
+    rm -rf "$out/share/flui/helpers/target"
 
-    # Wrapper script: handles initial config setup, path resolution, and runtime PATH
+    # Move compiled Rust helper binary into package bin
+    # (Cargo already placed flui-helper in $out/bin/)
+
+    # Create flui shell launcher
     cat <<'EOF' > "$out/bin/flui"
     #!/usr/bin/env bash
     set -e
@@ -47,7 +51,6 @@ stdenvNoCC.mkDerivation {
     CONFIG_DIR="''${XDG_CONFIG_HOME:-$HOME/.config}/quickshell"
     mkdir -p "$CONFIG_DIR"
 
-    # Initialize settings.json and matugen Theme.qml from templates on first run if missing
     if [ ! -f "$CONFIG_DIR/settings.json" ]; then
       if [ -f "$CONFIG_DIR/settings.json.example" ]; then
         cp "$CONFIG_DIR/settings.json.example" "$CONFIG_DIR/settings.json"
@@ -65,7 +68,6 @@ stdenvNoCC.mkDerivation {
       fi
     fi
 
-    # Convenient IPC subcommand routing
     if [ "$1" = "ipc" ]; then
       shift
       exec quickshell ipc call flui "$@"
@@ -74,11 +76,9 @@ stdenvNoCC.mkDerivation {
     exec quickshell -c "@FLUI_SHARE@" "$@"
     EOF
 
-    # Substitute @FLUI_SHARE@ with the store path
     substituteInPlace "$out/bin/flui" --replace "@FLUI_SHARE@" "$out/share/flui"
     chmod +x "$out/bin/flui"
 
-    # Wrap the launcher with all runtime dependencies prepended to PATH
     wrapProgram "$out/bin/flui" \
       --prefix PATH : ${lib.makeBinPath [
         quickshell
@@ -87,13 +87,10 @@ stdenvNoCC.mkDerivation {
         imagemagick
         cava
         bash
-        python3
         coreutils
         findutils
         gnugrep
-      ]}
-
-    runHook postInstall
+      ]}:"$out/bin"
   '';
 
   meta = with lib; {

@@ -70,18 +70,27 @@ Singleton {
 
     Process {
         id: lsblkProc
-        command: ["lsblk", "--json", "-b", "-o",
-                  "NAME,PATH,TYPE,RM,RO,SIZE,FSTYPE,LABEL,MOUNTPOINTS,FSUSE%,FSUSED,FSAVAIL,MODEL"]
+        command: [
+            Quickshell.env("HOME") + "/.config/quickshell/helpers/target/release/flui-helper",
+            "storage"
+        ]
 
         stdout: StdioCollector {
             id: lsblkOut
             waitForEnd: true
-            onStreamFinished: root.parse(lsblkOut.text)
+            onStreamFinished: {
+                try {
+                    root.devices = JSON.parse(lsblkOut.text.trim())
+                    root.loaded = true
+                } catch (e) {
+                    console.warn("StorageService: error parsing flui-helper storage", e)
+                }
+            }
         }
 
         onExited: function(exitCode, exitStatus) {
             if (exitCode !== 0)
-                console.warn("StorageService: lsblk exited with code", exitCode)
+                console.warn("StorageService: storage helper exited with code", exitCode)
         }
     }
 

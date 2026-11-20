@@ -29,23 +29,18 @@ Singleton {
     Process {
         id: queryProcess
         command: [
-            "brightnessctl",
-            "info"
+            Quickshell.env("HOME") + "/.config/quickshell/helpers/target/release/flui-helper",
+            "brightness"
         ]
 
         stdout: StdioCollector {
             onStreamFinished: {
                 let output = this.text.trim()
-
-                let match = output.match(/\((\d+)%\)/)
-
-                if (!match)
+                let newBrightness = parseInt(output)
+                if (isNaN(newBrightness))
                     return
 
-                let newBrightness = parseInt(match[1])
-
                 let changed = newBrightness !== root.brightness
-
                 root.brightness = newBrightness
 
                 if (!root._osdReady) {

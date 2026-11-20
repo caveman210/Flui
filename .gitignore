@@ -5,3 +5,8 @@ styles/themes/matugen/Theme.qml
 result
 result-*
 .direnv/
+
+
+# Added by cargo
+helpers/target
+/target

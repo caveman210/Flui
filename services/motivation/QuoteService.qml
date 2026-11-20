@@ -87,8 +87,8 @@ Singleton {
     Process {
         id: fetchProcess
         command: [
-            "curl", "-fsSL", "--max-time", "20",
-            "https://zenquotes.io/api/today"
+            Quickshell.env("HOME") + "/.config/quickshell/helpers/target/release/flui-helper",
+            "quote"
         ]
 
         stdout: StdioCollector {

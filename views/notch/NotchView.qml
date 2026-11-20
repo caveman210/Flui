@@ -4,17 +4,33 @@ import QtQuick.Layouts
 import "../shared"
 import "../../styles"
 import "../../services"
+import "../../services/audio"
 import "../../services/power"
 import "../../components/bar"
+import "../../components/sections"
 import "../../core"
 import "../../island"
 
 Item {
     id: root
+    readonly property bool hasCava: MediaService.isPlaying
+    readonly property int defaultWidth: 180
     implicitWidth: indicators.anyActive
-                       ? 240 + indicators.leftWidth + indicators.rightWidth
-                       : 240
+                       ? defaultWidth + indicators.leftWidth + indicators.rightWidth
+                       : (hasCava ? defaultWidth + 24 : defaultWidth)
     implicitHeight: 33
+
+    // Left end: Reactive Cava when playing audio (if no privacy indicators)
+    Cava {
+        anchors.left: parent.left
+        anchors.leftMargin: 12
+        anchors.verticalCenter: parent.verticalCenter
+        visible: root.hasCava && !indicators.anyActive
+        barCount: 4
+        barWidth: 3
+        spacingSize: 2
+        barColor: Theme.accent
+    }
 
     PrivacyIndicators {
         id: indicators
