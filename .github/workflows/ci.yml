@@ -79,6 +79,14 @@ jobs:
             fi
           done
 
+      # --- Set up CI Plugin Environment Mirror ---
+      - name: Mirror Plugins to User Config Directory for CI
+        run: |
+          echo "Setting up $HOME/.config/quickshell/plugins mirror in CI..."
+          mkdir -p "$HOME/.config/quickshell"
+          cp -r plugins "$HOME/.config/quickshell/"
+          echo "Successfully mirrored plugins to $HOME/.config/quickshell/plugins"
+
       # --- Autonomous Plugin System & Functional Contract Validation ---
       - name: Validate Autonomous Plugin System & Output Contracts
         run: |
@@ -154,6 +162,7 @@ jobs:
           assert code == 0, f'system execution failed: {err}'
           sys_info = json.loads(out)
           assert 'os' in sys_info and 'memory' in sys_info, 'System info missing fields'
+          print(f'    System detected: OS="{sys_info[\"os\"]}", Host="{sys_info[\"host\"]}", Kernel="{sys_info[\"kernel\"]}"')
 
           print('==> All plugin contracts and system validations passed.')
           "

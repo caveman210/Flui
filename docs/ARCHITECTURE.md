@@ -67,5 +67,29 @@ Flui enforces a strict **zero-hotwiring** policy: core views provide named decla
 
 Background metrics, hardware polling, and manifest validation are delegated to a unified Rust binary (`helpers/`):
 - Eliminates Python runtime overhead in hot paths.
-- Provides sub-millisecond JSON outputs for storage, battery, quotes, brightness, system monitoring, and plugin discovery.
+- Provides sub-millisecond JSON outputs for storage, battery, wallpapers, system monitoring, and plugin discovery.
+- Dynamically probes and runs standalone plugin backends without hardcoded plugin IDs.
 - Documented in [docs/helper.md](helper.md).
+
+## Current Status & Evolution (Post-v1.0-beta)
+
+Since the `v1.0-beta` milestone, Flui has undergone significant architectural modularization, hardening, and decoupling:
+
+### 1. Complete Decoupling of Services into Standalone Plugins
+- **Weather & Quote Plugins**: Migrated from monolithic core services into autonomous plugins (`plugins/weather/` and `plugins/quote/`).
+- **Autonomous Rust Crates**: Each plugin maintains its own `Cargo.toml`, source tree, and builds standalone release binaries (`plugins/*/bin/`).
+- **Quote Engine Overhaul**:
+  - Rotating multi-provider pool (FavQs, DummyJSON, ZenQuotes).
+  - 7-day rolling deduplication cache (`~/.cache/flui/quote_history.json`) preventing repeated quotes within a week.
+  - Surface separation: The outer bar/pill renders short motivational tidbits; clicking opens `QuoteView.qml` showing the full quote, author, and an interactive refresh button.
+- **Weather Fidelity**: Queries live `uv_index` and real atmospheric pressure at sea level (`pressure_msl`) from Open-Meteo, with localized update timestamps instead of static indicators.
+
+### 2. Zero-Hotwiring IPC Interface
+- Removed legacy hardcoded functions (`openWeather`, `openQuote`) from `IslandIPC.qml`.
+- Introduced generic IPC router targets (`quickshell ipc call plugins <open|toggle|list|menu|scan>` and `quickshell ipc call flui plugins <action>`).
+
+### 3. CI/CD & Developer Experience
+- **Polyglot Quality Pipeline**: Dynamic discovery and validation for 10+ languages (Rust, Zig, C, C++, Nix, JS, TS, Python, Shell, Lua, QML, JSON).
+- **Autonomous Contract Testing**: CI automatically builds standalone plugin binaries, validates directory mirrors in `$HOME/.config/quickshell/plugins`, and asserts functional schema output.
+- **Strict Manifest Linter**: Enforces SemVer compliance, category allowlists, and strict rejection of absolute paths.
+- **Code Style & Formatting**: Prettier configuration, `.prettierignore`, and Git pre-commit hook (`.githooks/pre-commit`).

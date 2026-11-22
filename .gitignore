@@ -11,3 +11,7 @@ result-*
 helpers/target
 /target
 **/target
+
+# Compiled binaries
+bin/
+**/bin/

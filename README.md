@@ -41,8 +41,10 @@ The bar and its dropdowns share flow-corner styling, visually joining panels to 
 ### Extensibility & Plugins
 
 - **Zero-hotwiring architecture**: Core shell is permanently decoupled from external plugins.
-- **Plug-and-play plugins**: Hot-plug extensions into the status bar, Control Center, settings pane, calendar, and notification cards.
+- **Plug-and-play plugins**: Hot-plug extensions into the status bar, Control Center, settings pane, calendar, and notification cards via declarative `ExtensionSlot` components.
+- **Autonomous Plugin Backends**: Plugins can provide their own standalone Rust backends (compiled into native binaries), Python scripts, shell scripts, or Node.js runners with independent dependency management.
 - **Dedicated Plugins Manager**: Browse installed plugins, toggle them on/off, and configure individual plugin settings inline with dynamic resizing and scrollbars.
+- **Generic Plugin IPC**: Inspect and control plugins from outside using `qs ipc call plugins <list|open|toggle|menu|scan>` without hardcoded function names.
 - **Strict lifecycle & safety**: When disabled, plugins are 100% inert (zero views, zero bar items, zero background services, settings hidden).
 - **System dependency detection**: Missing binaries trigger advisory desktop notifications upon enabling.
 

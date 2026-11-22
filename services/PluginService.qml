@@ -145,12 +145,19 @@ Singleton {
         return ""
     }
 
+    function toFileUrl(filePath) {
+        if (!filePath) return ""
+        if (filePath.indexOf("file://") === 0) return filePath
+        if (filePath.indexOf("/") === 0) return "file://" + filePath
+        return "file://" + Quickshell.configDir + "/" + filePath
+    }
+
     // Returns file:// path to a plugin's panel view component
     function getPluginViewSource(pluginId) {
         for (var i = 0; i < root.plugins.length; i++) {
             var p = root.plugins[i]
             if (p && p.id === pluginId && root.isPluginEnabled(pluginId)) {
-                return p.view_entry ? ("file://" + p.view_entry) : ""
+                return p.view_entry ? root.toFileUrl(p.view_entry) : ""
             }
         }
         return ""
@@ -205,7 +212,7 @@ Singleton {
                     }
                     registry[ext.slot].push({
                         pluginId: p.id,
-                        source: "file://" + ext.resolved_source,
+                        source: root.toFileUrl(ext.resolved_source),
                         position: ext.position || "append"
                     })
                 }

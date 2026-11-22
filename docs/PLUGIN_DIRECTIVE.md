@@ -24,6 +24,10 @@
 ~/.config/quickshell/plugins/
 └── my-plugin/
     ├── plugin.json          ← manifest (required)
+    ├── Cargo.toml           ← standalone Rust backend manifest (optional)
+    ├── main.rs              ← native Rust runner source (optional)
+    ├── bin/                 ← compiled backend binaries (optional, gitignored)
+    │   └── my-plugin
     ├── Service.qml          ← background singleton (optional)
     ├── Settings.qml         ← inline settings view (optional)
     ├── BarWidget.qml        ← bar injection component (optional)

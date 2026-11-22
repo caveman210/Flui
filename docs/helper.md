@@ -157,3 +157,17 @@ Socket {
 | **RAM Utilization** | Transient spikes + Python runtime | **~2.5 MB** stable RSS | Minimal baseline |
 | **CPU Wakeups** | Continuous timer interrupts | Pure event-driven epoll | Battery life saved |
 | **Lookup Latency** | 20 ms – 150 ms | **< 0.2 ms** | Instant UI updates |
+
+---
+
+## 7. Current Multicall Command Surface (Post-v1.0-beta)
+
+`flui-helper` provides subcommands for fast runtime metrics and plugin lifecycle management:
+
+| Command | Output / Action | Description |
+|---|---|---|
+| `flui-helper plugins` | JSON Array | Discovers and validates all plugin manifests in `~/.config/quickshell/plugins/`. |
+| `flui-helper plugins list` | Formatted Table | Displays installed plugin IDs, SemVer versions, categories, and detected backends. |
+| `flui-helper plugins run <id> [args]` | Standard output | Dispatches execution to a plugin's autonomous runner (native binary under `bin/`, Python, Shell, or Node). |
+| `flui-helper system` | JSON Object | Direct `/proc` and `/etc/os-release` telemetry: dynamic OS, host, kernel, uptime, CPU, GPU, memory, and disk. |
+| `flui-helper wallpapers` | JSON Array | High-speed directory scanner returning sorted wallpaper image paths. |

@@ -14,6 +14,8 @@ flui ipc <command>
 
 ## Available Commands
 
+### Shell & Core Panels
+
 | Command | Description |
 |---|---|
 | `openExpandedHome` | Open the expanded island view (clock, media, system status) |
@@ -25,9 +27,26 @@ flui ipc <command>
 | `openBluetoothMenu` | Open the Bluetooth device pairing menu |
 | `openMedia` | Open rich media player controls |
 | `openNotifications` | Open the notifications history center |
+| `openPluginsMenu` | Open the plugin manager and settings pane |
 | `cycleLayout` | Cycle active layout: Pill → Notch → Bar |
 | `focusToggle` | Toggle Do Not Disturb (DND) focus state |
 | `reset` | Close any active panel and return to idle state |
+
+### Generic Plugin Interface
+
+Flui provides completely generic, decoupled IPC commands for managing and interacting with plugins without hardcoded function names:
+
+```bash
+# Call via the 'plugins' scope:
+qs ipc call plugins list                     # List all discovered plugins, versions, and statuses
+qs ipc call plugins open <plugin_id>         # Open a plugin's panel view (e.g. qs ipc call plugins open weather)
+qs ipc call plugins toggle <plugin_id>       # Toggle a plugin on or off
+qs ipc call plugins menu                     # Open the plugins management menu
+qs ipc call plugins scan                     # Force re-scan and reload of the plugins directory
+
+# Or via the 'flui' scope:
+qs ipc call flui plugins <action> [args]     # Generic dispatcher to plugin actions
+```
 
 ## Compositor Keybindings
 
