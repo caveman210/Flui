@@ -52,6 +52,10 @@ IpcHandler {
         IslandController.openNotifications()
     }
 
+    function openPluginsMenu() {
+        IslandController.openPluginsMenu()
+    }
+
     function cycleLayout() {
         IslandController.cycleLayout()
     }
