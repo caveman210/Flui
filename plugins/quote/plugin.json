@@ -1,0 +1,24 @@
+{
+  "id": "quote",
+  "name": "Daily Quote & Motivation",
+  "version": "1.0.0",
+  "author": "caveman210",
+  "description": "Daily inspirational quotes and greetings integrated into the Island bar and dropdown panel.",
+  "icon": "✦",
+  "category": "productivity",
+  "enabled": true,
+  "deps": [],
+  "entry": {
+    "service": "Service.qml"
+  },
+  "panel": {
+    "view": "QuoteView.qml"
+  },
+  "extensions": [
+    {
+      "slot": "bar.info",
+      "source": "BarWidget.qml",
+      "position": "append"
+    }
+  ]
+}

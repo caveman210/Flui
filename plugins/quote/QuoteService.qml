@@ -6,11 +6,7 @@ import Quickshell.Io
 
 import "MotivationUtils.js" as MotivationUtils
 
-// Quote of the day, pulled from ZenQuotes' free `/api/today`
-// endpoint (no API key). The quote is fetched at startup, again
-// after a local day rollover, and retried with a 15 minute backoff
-// if the request fails so an offline moment does not leave the bar
-// without a quote until the next login.
+// Quote of the day, pulled via flui-helper quote.
 Singleton {
     id: root
 

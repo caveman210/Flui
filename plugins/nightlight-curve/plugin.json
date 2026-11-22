@@ -2,7 +2,7 @@
   "id": "nightlight-curve",
   "name": "Night Light & Curve Engine",
   "version": "1.0.0",
-  "author": "Caveman",
+  "author": "caveman210",
   "description": "Custom S-curve and Bézier transition progression for Wayland color temperature.",
   "icon": "󰔎",
   "category": "system",

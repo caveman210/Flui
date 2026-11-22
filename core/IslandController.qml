@@ -1,10 +1,12 @@
 pragma Singleton
 
 import QtQuick
+import Quickshell
 
 import "../island"
+import "../services"
 
-QtObject {
+Singleton {
     id: root
 
     // =========================================================
@@ -36,15 +38,16 @@ QtObject {
             IslandState.pluginsMenuMode
     }
 
-    function openPluginView(pluginId) {
-        var src = PluginService.getPluginViewSource(pluginId)
-        if (src && src.length > 0) {
-            IslandState.activePluginId = pluginId
-            IslandState.activePluginViewSource = src
-            IslandState.mode = IslandState.pluginViewMode
-        } else {
-            console.warn("IslandController: no panel view found for plugin", pluginId)
-        }
+    function openPluginView(pluginId, alignment) {
+        PluginService.openView(pluginId, alignment)
+    }
+
+    function openWeather() {
+        PluginService.openView("weather", "center")
+    }
+
+    function openQuote() {
+        PluginService.openView("quote", "left")
     }
 
     function openControlCenter() {
@@ -77,20 +80,12 @@ QtObject {
             IslandState.bluetoothMenuMode
     }
 
-    function openWeather() {
-        IslandState.mode = IslandState.weatherMode
-    }
-
     function openSettings() {
         IslandState.mode = IslandState.settingsMode
     }
 
     function openNightLight() {
         IslandState.mode = IslandState.nightLightMode
-    }
-
-    function openWeatherSettings() {
-        IslandState.mode = IslandState.weatherSettingsMode
     }
 
     function openSystemMenu() {
@@ -155,15 +150,6 @@ QtObject {
             IslandState.notificationsMode
     }
 
-    function openQuote() {
-        IslandState.returnToExpanded =
-            IslandState.islandPinned
-
-        IslandState.islandPinned = false
-
-        IslandState.mode =
-            IslandState.quoteMode
-    }
 
     // =========================================================
     // TRAY (SubView)

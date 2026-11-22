@@ -3,7 +3,6 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import "../config"
 
 Singleton {
     id: root
@@ -21,12 +20,17 @@ Singleton {
     property string wind: "--"
     property string city: ""
     property string providerName: "Open-Meteo"
-    property string currentProvider: ConfigStore.weatherProvider || "openmeteo"
+    property string currentProvider: "openmeteo"
+    property string locationOverride: ""
+    property int pollIntervalMins: 5
     property string lastUpdated: ""
     property double lastUpdatedTimestamp: 0 // ms since epoch
     property string errorMessage: ""
     property bool loading: false
     property bool loaded: false
+
+    readonly property string configDir: Quickshell.env("HOME") + "/.cache/quickshell/weather"
+    readonly property string configFile: configDir + "/config.json"
 
     // Stale check: true if never loaded successfully or > 1 hour since last successful update
     readonly property bool isStale: !loaded || (lastUpdatedTimestamp > 0 && (Date.now() - lastUpdatedTimestamp) > 3600000)
@@ -40,10 +44,72 @@ Singleton {
 
     function setProvider(providerId) {
         if (!providerId) return
-        ConfigStore.weatherProvider = providerId
-        ConfigStore.save()
         root.currentProvider = providerId
+        saveConfig()
         root.refresh()
+    }
+
+    function setLocation(loc) {
+        root.locationOverride = loc ? loc.trim() : ""
+        saveConfig()
+        root.refresh()
+    }
+
+    function setPollInterval(mins) {
+        root.pollIntervalMins = Math.max(1, Math.min(60, mins || 5))
+        pollTimer.interval = root.pollIntervalMins * 60 * 1000
+        saveConfig()
+    }
+
+    function saveConfig() {
+        var data = {
+            "provider": root.currentProvider,
+            "location": root.locationOverride,
+            "pollIntervalMins": root.pollIntervalMins
+        }
+        var jsonStr = JSON.stringify(data, null, 2)
+        saveProc.command = [
+            "python3", "-c",
+            "import sys, os, pathlib\np = pathlib.Path(sys.argv[1]); p.parent.mkdir(parents=True, exist_ok=True)\ntmp = sys.argv[1] + '.tmp'\nwith open(tmp, 'w') as f: f.write(sys.argv[2])\nos.replace(tmp, sys.argv[1])",
+            root.configFile,
+            jsonStr
+        ]
+        saveProc.running = false
+        saveProc.running = true
+    }
+
+    function loadConfig() {
+        loadProc.command = [
+            "python3", "-c",
+            "import sys, os, json\np = sys.argv[1]\nif os.path.exists(p):\n    with open(p, 'r') as f: print(f.read())\nelse: print('{}')",
+            root.configFile
+        ]
+        loadProc.running = false
+        loadProc.running = true
+    }
+
+    Process {
+        id: loadProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    var data = JSON.parse(text.trim())
+                    if (data.provider) root.currentProvider = data.provider
+                    if (data.location !== undefined) root.locationOverride = data.location
+                    if (data.pollIntervalMins) {
+                        root.pollIntervalMins = data.pollIntervalMins
+                        pollTimer.interval = root.pollIntervalMins * 60 * 1000
+                    }
+                } catch (e) {
+                    // Default config will be used
+                }
+                root.refresh()
+            }
+        }
+    }
+
+    Process {
+        id: saveProc
     }
 
     function refresh() {
@@ -51,8 +117,8 @@ Singleton {
         loading = true
         errorMessage = ""
 
-        var prov = ConfigStore.weatherProvider || "aggregator"
-        var loc = ConfigStore.weatherLocation ? ConfigStore.weatherLocation.trim() : ""
+        var prov = root.currentProvider || "openmeteo"
+        var loc = root.locationOverride ? root.locationOverride.trim() : ""
         fetchProc.command = [
             Quickshell.env("HOME") + "/.config/quickshell/helpers/target/release/flui-helper",
             "weather",
@@ -65,25 +131,10 @@ Singleton {
 
     Timer {
         id: pollTimer
-        interval: Math.max(1, ConfigStore.weatherPollIntervalMins || 5) * 60 * 1000 // 5 minutes default
+        interval: root.pollIntervalMins * 60 * 1000
         running: true
         repeat: true
-        triggeredOnStart: true
         onTriggered: root.refresh()
-    }
-
-    Connections {
-        target: ConfigStore
-        function onWeatherLocationChanged() {
-            root.refresh()
-        }
-        function onWeatherProviderChanged() {
-            root.currentProvider = ConfigStore.weatherProvider || "openmeteo"
-            root.refresh()
-        }
-        function onWeatherPollIntervalMinsChanged() {
-            pollTimer.interval = Math.max(1, ConfigStore.weatherPollIntervalMins || 5) * 60 * 1000
-        }
     }
 
     Process {
@@ -122,5 +173,9 @@ Singleton {
                 }
             }
         }
+    }
+
+    Component.onCompleted: {
+        root.loadConfig()
     }
 }

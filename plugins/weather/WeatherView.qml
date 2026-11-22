@@ -5,19 +5,23 @@ import Quickshell
 
 import "../../core"
 import "../../styles"
-import "../../services"
-import "../../island"
+import "."
 
 FocusScope {
     id: root
-    implicitWidth: 350
-    implicitHeight: layout.implicitHeight + 36
+    property bool showSettings: false
+    implicitWidth: showSettings ? 440 : 350
+    implicitHeight: showSettings ? (settingsView.implicitHeight + 36) : (layout.implicitHeight + 36)
 
     Component.onCompleted: forceActiveFocus()
 
     Keys.onPressed: function(event) {
         if (event.key === Qt.Key_Escape) {
-            IslandController.reset()
+            if (root.showSettings) {
+                root.showSettings = false
+            } else {
+                IslandController.reset()
+            }
             event.accepted = true
         }
     }
@@ -25,13 +29,17 @@ FocusScope {
     readonly property bool hasError: WeatherService.errorMessage !== ""
     readonly property bool isLoading: WeatherService.loading
 
+    // -----------------------------------------------------
+    // LIVE FORECAST VIEW (Default)
+    // -----------------------------------------------------
     ColumnLayout {
         id: layout
+        visible: !root.showSettings
         anchors.fill: parent
         anchors.margins: 18
         spacing: 12
 
-        // Top Header: Location, Condition Summary & Actions (No provider name shown)
+        // Top Header: Location, Condition Summary & Actions
         RowLayout {
             Layout.fillWidth: true
             spacing: 8
@@ -78,7 +86,7 @@ FocusScope {
                 }
             }
 
-            // Weather Settings Shortcut Button
+            // Weather Settings Dropdown Button
             Rectangle {
                 width: 28
                 height: 28
@@ -96,10 +104,10 @@ FocusScope {
                 }
 
                 HoverHandler { id: setHover; cursorShape: Qt.PointingHandCursor }
-                TapHandler { onTapped: IslandController.openWeatherSettings() }
+                TapHandler { onTapped: root.showSettings = true }
             }
 
-            // Refresh Button (No rotation, gentle pulse while loading)
+            // Refresh Button (gentle pulse while loading)
             Rectangle {
                 width: 28
                 height: 28
@@ -146,7 +154,7 @@ FocusScope {
                 anchors.margins: 16
                 spacing: 16
 
-                // Weather Icon: Pulses while loading, turns grey on error, front color on success
+                // Weather Icon: Pulses while loading, turns grey on error, accent color on success
                 Item {
                     width: 52
                     height: 52
@@ -330,6 +338,57 @@ FocusScope {
                     }
                 }
             }
+        }
+    }
+
+    // -----------------------------------------------------
+    // WEATHER SETTINGS SUBVIEW (Toggled via Gear Icon)
+    // -----------------------------------------------------
+    ColumnLayout {
+        id: settingsView
+        visible: root.showSettings
+        anchors.fill: parent
+        anchors.margins: 18
+        spacing: 14
+
+        // Top Navigation Header (Back button to forecast)
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+
+            Rectangle {
+                width: 32
+                height: 32
+                radius: 16
+                color: backHover.hovered ? Theme.buttonHover : Theme.surface
+                border.width: 1
+                border.color: Theme.border
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "󰁍"
+                    color: Theme.accent
+                    font.family: Theme.iconFont
+                    font.pixelSize: 16
+                }
+
+                HoverHandler { id: backHover; cursorShape: Qt.PointingHandCursor }
+                TapHandler { onTapped: root.showSettings = false }
+            }
+
+            Text {
+                text: "Weather Settings"
+                color: Theme.textPrimary
+                font.bold: true
+                font.pixelSize: 18
+                Layout.alignment: Qt.AlignVCenter
+            }
+
+            Item { Layout.fillWidth: true }
+        }
+
+        Settings {
+            Layout.fillWidth: true
         }
     }
 }

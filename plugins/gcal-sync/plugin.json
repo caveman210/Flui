@@ -2,7 +2,7 @@
   "id": "gcal-sync",
   "name": "Google Calendar Sync",
   "version": "1.0.0",
-  "author": "Caveman",
+  "author": "caveman210",
   "description": "Seamless Google Calendar sync with OAuth login & live Island calendar integration.",
   "icon": "󰃭",
   "category": "productivity",

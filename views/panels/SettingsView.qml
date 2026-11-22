@@ -163,44 +163,6 @@ FocusScope {
                 // Divider line (Bar only)
                 Rectangle { visible: IslandState.layoutIsBar; Layout.fillWidth: true; height: 1; color: Theme.border }
 
-                // 2. Bar Info Mode Cycle: Cycle / Weather / Motivation (Bar Layout Only)
-                RowLayout {
-                    visible: IslandState.layoutIsBar
-                    Layout.fillWidth: true
-                    spacing: 10
-
-                    Text { text: "󰔏"; font.family: Theme.iconFont; font.pixelSize: 16; color: Theme.accent }
-                    Text { text: "Display Slot"; color: Theme.textPrimary; font.pixelSize: 13; Layout.fillWidth: true }
-
-                    Rectangle {
-                        width: 80
-                        height: 26
-                        radius: 13
-                        color: Theme.buttonBackground
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: ConfigStore.barInfoMode === "cycle" ? "Cycle (30m)"
-                                : (ConfigStore.barInfoMode === "weather" ? "Weather" : "Quote")
-                            color: Theme.accent
-                            font.pixelSize: 11
-                            font.bold: true
-                        }
-                        HoverHandler { cursorShape: Qt.PointingHandCursor }
-                        TapHandler {
-                            onTapped: {
-                                if (ConfigStore.barInfoMode === "cycle") ConfigStore.barInfoMode = "weather"
-                                else if (ConfigStore.barInfoMode === "weather") ConfigStore.barInfoMode = "motivation"
-                                else ConfigStore.barInfoMode = "cycle"
-                                ConfigStore.save()
-                            }
-                        }
-                    }
-                }
-
-                // Divider line (Bar only)
-                Rectangle { visible: IslandState.layoutIsBar; Layout.fillWidth: true; height: 1; color: Theme.border }
-
                 // 3. Autohide Toggle (Shared across all layouts)
                 RowLayout {
                     Layout.fillWidth: true
@@ -229,54 +191,6 @@ FocusScope {
                     }
                 }
 
-                // Divider line
-                Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
-
-                // 4. Weather Provider & Location Section Link
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 10
-
-                    Text { text: "󰖐"; font.family: Theme.iconFont; font.pixelSize: 16; color: Theme.accent }
-
-                    Column {
-                        Layout.fillWidth: true
-                        spacing: 1
-
-                        Text {
-                            text: "Weather & Providers"
-                            color: Theme.textPrimary
-                            font.pixelSize: 13
-                        }
-
-                        Text {
-                            text: WeatherService.providerName + (ConfigStore.weatherLocation ? " • " + ConfigStore.weatherLocation : " • Auto IP")
-                            color: Theme.textMuted
-                            font.pixelSize: 11
-                            elide: Text.ElideRight
-                        }
-                    }
-
-                    Rectangle {
-                        width: 28
-                        height: 28
-                        radius: 14
-                        color: weatherGearHover.hovered ? Theme.buttonHover : Theme.surface
-                        border.width: 1
-                        border.color: Theme.border
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "󰅂"
-                            color: Theme.accent
-                            font.family: Theme.iconFont
-                            font.pixelSize: 14
-                        }
-
-                        HoverHandler { id: weatherGearHover; cursorShape: Qt.PointingHandCursor }
-                        TapHandler { onTapped: IslandController.openWeatherSettings() }
-                    }
-                }
 
                 // Divider line
                 Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }

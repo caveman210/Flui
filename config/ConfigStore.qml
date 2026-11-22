@@ -12,14 +12,7 @@ Singleton {
         : (Quickshell.env("HOME") + "/.config/quickshell")
     readonly property string configPath: configDir + "/settings.json"
 
-    // Weather Settings
-    property string weatherProvider: "openmeteo" // "openmeteo", "wttr", "metno", "aggregator"
-    property string weatherLocation: ""
-    property string weatherApiKey: ""
-    property int weatherPollIntervalMins: 5
-
     // Bar / Island Display
-    property string barInfoMode: "cycle" // "cycle", "weather", "motivation"
     property int layout: 0 // 0 = Pill, 1 = Notch, 2 = Bar
     property int barEdgePosition: 0 // 0 = Top, 1 = Bottom
     property bool autoHideBar: false
@@ -56,18 +49,14 @@ Singleton {
     })
 
     // Plugins Settings
-    property var enabledPlugins: []
+    property var enabledPlugins: ["weather", "quote", "gcal-sync"]
+    property var disabledPlugins: []
 
     property bool loaded: false
     property bool isSaving: false
 
     function save() {
         var data = {
-            "weatherProvider": root.weatherProvider,
-            "weatherLocation": root.weatherLocation,
-            "weatherApiKey": root.weatherApiKey,
-            "weatherPollIntervalMins": root.weatherPollIntervalMins,
-            "barInfoMode": root.barInfoMode,
             "layout": root.layout,
             "barEdgePosition": root.barEdgePosition,
             "autoHideBar": root.autoHideBar,
@@ -85,7 +74,8 @@ Singleton {
             "firstRunCompleted": root.firstRunCompleted,
             "matugenEnabled": root.matugenEnabled,
             "themedApps": root.themedApps,
-            "enabledPlugins": root.enabledPlugins
+            "enabledPlugins": root.enabledPlugins,
+            "disabledPlugins": root.disabledPlugins
         }
 
         var jsonStr = JSON.stringify(data, null, 2)
@@ -106,11 +96,6 @@ Singleton {
     function applyJson(json) {
         if (!json || typeof json !== "object") return
 
-        if (json.weatherProvider !== undefined) root.weatherProvider = json.weatherProvider
-        if (json.weatherLocation !== undefined) root.weatherLocation = json.weatherLocation
-        if (json.weatherApiKey !== undefined) root.weatherApiKey = json.weatherApiKey
-        if (json.weatherPollIntervalMins !== undefined) root.weatherPollIntervalMins = json.weatherPollIntervalMins
-        if (json.barInfoMode !== undefined) root.barInfoMode = json.barInfoMode
         if (json.layout !== undefined) root.layout = json.layout
         if (json.barEdgePosition !== undefined) root.barEdgePosition = json.barEdgePosition
         if (json.autoHideBar !== undefined) root.autoHideBar = json.autoHideBar
@@ -134,6 +119,9 @@ Singleton {
         }
         if (json.enabledPlugins !== undefined && Array.isArray(json.enabledPlugins)) {
             root.enabledPlugins = json.enabledPlugins
+        }
+        if (json.disabledPlugins !== undefined && Array.isArray(json.disabledPlugins)) {
+            root.disabledPlugins = json.disabledPlugins
         }
 
         root.loaded = true

@@ -6,37 +6,17 @@ import Quickshell
 import "../../core"
 import "../../styles"
 import "../../services"
-import "../../island"
 import "../../components/common"
 
 FocusScope {
     id: root
 
-    readonly property real screenWidth: Quickshell.screens.length > 0
-        ? Quickshell.screens[0].width
-        : 1920
-
-    implicitWidth: 320
+    implicitWidth: 350
     implicitHeight: layout.implicitHeight + 36
 
-    property int viewYear: new Date().getFullYear()
-    property int viewMonth: new Date().getMonth()
-
-    readonly property var monthNames: [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-    ]
-    readonly property var dayNames: ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
-
-    function daysInMonth(y, m) {
-        return new Date(y, m + 1, 0).getDate()
+    Component.onCompleted: {
+        forceActiveFocus()
     }
-
-    function firstDayOfMonth(y, m) {
-        return new Date(y, m, 1).getDay()
-    }
-
-    Component.onCompleted: forceActiveFocus()
 
     Keys.onPressed: function(event) {
         if (event.key === Qt.Key_Escape) {
@@ -45,223 +25,174 @@ FocusScope {
         }
     }
 
+    property date displayedDate: new Date()
+    property date today: new Date()
+
+    readonly property int currentYear: displayedDate.getFullYear()
+    readonly property int currentMonth: displayedDate.getMonth()
+
+    readonly property string monthYearString: displayedDate.toLocaleDateString(Qt.locale(), "MMMM yyyy")
+
+    // Days in current month
+    readonly property int daysInMonth: new Date(currentYear, currentMonth + 1, 0).getDate()
+
+    // 0 = Sunday, 1 = Monday, etc. Adjust for Monday start:
+    // If starting on Monday: (day + 6) % 7
+    readonly property int firstDayOfWeek: {
+        var day = new Date(currentYear, currentMonth, 1).getDay()
+        return (day + 6) % 7
+    }
+
+    function prevMonth() {
+        displayedDate = new Date(currentYear, currentMonth - 1, 1)
+    }
+
+    function nextMonth() {
+        displayedDate = new Date(currentYear, currentMonth + 1, 1)
+    }
+
+    function resetToToday() {
+        displayedDate = new Date()
+    }
+
     ColumnLayout {
         id: layout
         anchors.fill: parent
         anchors.margins: 18
         spacing: 12
 
-        // Month & Year header with navigation
+        // Top Navigation Header (Month/Year & Prev/Next Buttons)
         RowLayout {
             Layout.fillWidth: true
             spacing: 8
 
             Text {
-                text: "󰸗"
-                color: Theme.accent
-                font.family: Theme.iconFont
-                font.pixelSize: 18
-                Layout.alignment: Qt.AlignVCenter
-            }
-
-            Text {
-                text: root.monthNames[root.viewMonth] + " " + root.viewYear
+                text: root.monthYearString
                 color: Theme.textPrimary
-                font.pixelSize: 15
                 font.bold: true
+                font.pixelSize: 18
                 Layout.alignment: Qt.AlignVCenter
             }
 
             Item { Layout.fillWidth: true }
 
+            // Prev month button
             Rectangle {
                 width: 28
                 height: 28
                 radius: 14
-                color: prevHover.hovered ? Theme.surfaceAlt : Theme.surface
-                Layout.alignment: Qt.AlignVCenter
+                color: prevHover.hovered ? Theme.buttonHover : Theme.surface
+                border.width: 1
+                border.color: Theme.border
 
                 Text {
                     anchors.centerIn: parent
-                    text: ""
-                    color: Theme.textPrimary
+                    text: "󰅁"
+                    color: Theme.textSecondary
                     font.family: Theme.iconFont
-                    font.pixelSize: 12
+                    font.pixelSize: 14
                 }
 
                 HoverHandler { id: prevHover; cursorShape: Qt.PointingHandCursor }
-                TapHandler {
-                    onTapped: {
-                        if (root.viewMonth === 0) {
-                            root.viewMonth = 11
-                            root.viewYear -= 1
-                        } else {
-                            root.viewMonth -= 1
-                        }
-                    }
-                }
+                TapHandler { onTapped: root.prevMonth() }
             }
 
+            // Next month button
             Rectangle {
                 width: 28
                 height: 28
                 radius: 14
-                color: nextHover.hovered ? Theme.surfaceAlt : Theme.surface
-                Layout.alignment: Qt.AlignVCenter
+                color: nextHover.hovered ? Theme.buttonHover : Theme.surface
+                border.width: 1
+                border.color: Theme.border
 
                 Text {
                     anchors.centerIn: parent
-                    text: ""
-                    color: Theme.textPrimary
+                    text: "󰅂"
+                    color: Theme.textSecondary
                     font.family: Theme.iconFont
-                    font.pixelSize: 12
+                    font.pixelSize: 14
                 }
 
                 HoverHandler { id: nextHover; cursorShape: Qt.PointingHandCursor }
-                TapHandler {
-                    onTapped: {
-                        if (root.viewMonth === 11) {
-                            root.viewMonth = 0
-                            root.viewYear += 1
-                        } else {
-                            root.viewMonth += 1
-                        }
-                    }
-                }
+                TapHandler { onTapped: root.nextMonth() }
             }
         }
 
-        // Days of week header
-        Grid {
-            columns: 7
-            Layout.alignment: Qt.AlignHCenter
-            columnSpacing: 8
+        // Days of week header (Mon - Sun)
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 0
 
             Repeater {
-                model: root.dayNames
-                Text {
-                    width: 32
-                    horizontalAlignment: Text.AlignHCenter
-                    text: modelData
-                    color: Theme.textMuted
-                    font.pixelSize: 11
-                    font.bold: true
-                }
-            }
-        }
+                model: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
 
-        // Days grid
-        Grid {
-            columns: 7
-            Layout.alignment: Qt.AlignHCenter
-            columnSpacing: 8
-            rowSpacing: 5
-
-            // Blank lead cells
-            Repeater {
-                model: root.firstDayOfMonth(root.viewYear, root.viewMonth)
-                Item { width: 32; height: 28 }
-            }
-
-            // Month days
-            Repeater {
-                model: root.daysInMonth(root.viewYear, root.viewMonth)
-
-                delegate: Rectangle {
-                    id: dayCell
-                    width: 32
-                    height: 28
-                    radius: 8
-
-                    property bool isToday: {
-                        var now = new Date()
-                        return (index + 1) === now.getDate()
-                            && root.viewMonth === now.getMonth()
-                            && root.viewYear === now.getFullYear()
-                    }
-
-                    color: isToday ? Theme.accent : (cellHover.hovered ? Theme.surface : "transparent")
+                Item {
+                    Layout.fillWidth: true
+                    height: 24
 
                     Text {
                         anchors.centerIn: parent
-                        text: index + 1
-                        color: dayCell.isToday ? Theme.background : Theme.textPrimary
+                        text: modelData
+                        color: Theme.textMuted
+                        font.pixelSize: 11
+                        font.bold: true
+                    }
+                }
+            }
+        }
+
+        // Calendar Grid (6 rows x 7 columns = 42 cells)
+        GridLayout {
+            id: grid
+            Layout.fillWidth: true
+            columns: 7
+            rowSpacing: 4
+            columnSpacing: 4
+
+            Repeater {
+                model: 42
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 32
+                    radius: 8
+
+                    readonly property int dayOffset: index - root.firstDayOfWeek
+                    readonly property int dayNumber: dayOffset + 1
+                    readonly property bool isCurrentMonth: dayNumber > 0 && dayNumber <= root.daysInMonth
+                    readonly property bool isToday: isCurrentMonth &&
+                                                   root.today.getDate() === dayNumber &&
+                                                   root.today.getMonth() === root.currentMonth &&
+                                                   root.today.getFullYear() === root.currentYear
+
+                    color: isToday ? Theme.accent : (cellHover.hovered && isCurrentMonth ? Theme.buttonHover : "transparent")
+
+                    Behavior on color {
+                        ColorAnimation { duration: Theme.animationFast }
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: isCurrentMonth ? dayNumber : ""
+                        color: isToday ? Theme.background : (isCurrentMonth ? Theme.textPrimary : "transparent")
                         font.pixelSize: 12
-                        font.bold: dayCell.isToday
+                        font.bold: isToday
                     }
 
                     HoverHandler {
                         id: cellHover
+                        enabled: isCurrentMonth
+                        cursorShape: Qt.PointingHandCursor
                     }
                 }
             }
         }
 
-        // Weather banner inside borders (ONLY for Notch and Pill mode)
-        // Two-line hero layout: Large 2-line temperature on left, condition wrapped below location on right
-        Rectangle {
-            visible: !IslandState.layoutIsBar
+        // Extensibility Slot: Calendar Weather Forecast Card
+        ExtensionSlot {
+            slotName: "calendar.weather"
             Layout.fillWidth: true
-            Layout.topMargin: 8
-            implicitHeight: weatherRow.implicitHeight + 20
-            radius: 14
-            color: Theme.surface
-            border.width: 1
-            border.color: Theme.border
-            clip: true
-
-            RowLayout {
-                id: weatherRow
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.margins: 12
-                spacing: 12
-
-                Text {
-                    text: WeatherService.icon
-                    color: Theme.accent
-                    font.family: Theme.iconFont
-                    font.pixelSize: 28
-                    Layout.alignment: Qt.AlignVCenter
-                }
-
-                // Double-height prominent temperature display
-                Text {
-                    text: WeatherService.temp
-                    color: Theme.textPrimary
-                    font.pixelSize: 22
-                    font.bold: true
-                    Layout.alignment: Qt.AlignVCenter
-                }
-
-                Item { Layout.fillWidth: true }
-
-                // Location on top, condition moved to its own line underneath
-                ColumnLayout {
-                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-                    spacing: 2
-
-                    Text {
-                        text: WeatherService.city !== "" ? WeatherService.city : "Weather"
-                        color: Theme.textPrimary
-                        font.pixelSize: 12
-                        font.bold: true
-                        Layout.alignment: Qt.AlignRight
-                    }
-
-                    Text {
-                        text: WeatherService.condition
-                        color: Theme.textSecondary
-                        font.pixelSize: 11
-                        Layout.alignment: Qt.AlignRight
-                        elide: Text.ElideRight
-                    }
-                }
-            }
-
-            HoverHandler { cursorShape: Qt.PointingHandCursor }
-            TapHandler { onTapped: IslandController.openWeather() }
         }
 
         // Extensibility Slot: Calendar Events & Agenda

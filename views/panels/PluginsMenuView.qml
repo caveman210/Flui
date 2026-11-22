@@ -8,6 +8,7 @@ import Quickshell.Io
 import "../../core"
 import "../../services"
 import "../../styles"
+import "../../config"
 
 FocusScope {
     id: root
@@ -252,7 +253,7 @@ FocusScope {
             delegate: Rectangle {
                 id: card
                 required property var modelData
-                readonly property bool isEnabled: PluginService.isPluginEnabled(modelData.id)
+                readonly property bool isEnabled: (ConfigStore.disabledPlugins, ConfigStore.enabledPlugins, PluginService.isPluginEnabled(modelData.id))
                 readonly property bool isValid: modelData.is_valid !== false
 
                 width: listView.width

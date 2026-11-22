@@ -1,9 +1,10 @@
 pragma Singleton
 
 import QtQuick
+import Quickshell
 import "../config"
 
-QtObject {
+Singleton {
     // =========================================================
     // MODES
     // =========================================================
@@ -19,20 +20,18 @@ QtObject {
     readonly property int wifiMenuMode: 8
     readonly property int bluetoothMenuMode: 9
     readonly property int notificationsMode: 10
-    readonly property int quoteMode: 11
-    readonly property int systemMenuMode: 12
-    readonly property int calendarMode: 13
-    readonly property int settingsMode: 14
-    readonly property int weatherMode: 15
-    readonly property int nightLightMode: 16
-    readonly property int weatherSettingsMode: 17
-    readonly property int trayMode: 18
-    readonly property int pluginsMenuMode: 19
-    readonly property int pluginViewMode: 20
+    readonly property int systemMenuMode: 11
+    readonly property int calendarMode: 12
+    readonly property int settingsMode: 13
+    readonly property int nightLightMode: 14
+    readonly property int trayMode: 15
+    readonly property int pluginsMenuMode: 16
+    readonly property int pluginViewMode: 17
 
     // Dynamic plugin view state
     property string activePluginId: ""
     property string activePluginViewSource: ""
+    property string activePluginAlignment: "center"
 
     // =========================================================
     // LAYOUT
@@ -126,13 +125,10 @@ QtObject {
         mode === bluetoothMenuMode ||
         mode === notificationsMode ||
         mode === controlCenterMode ||
-        mode === quoteMode ||
         mode === systemMenuMode ||
         mode === calendarMode ||
         mode === settingsMode ||
-        mode === weatherMode ||
         mode === nightLightMode ||
-        mode === weatherSettingsMode ||
         mode === trayMode ||
         mode === pluginsMenuMode ||
         mode === pluginViewMode

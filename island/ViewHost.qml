@@ -12,8 +12,8 @@ import "../core"
 Item {
     id: root
     readonly property var currentItem: viewLoader.item
-    implicitWidth: viewLoader.item ? viewLoader.item.implicitWidth : 0
-    implicitHeight: viewLoader.item ? viewLoader.item.implicitHeight : 0
+    implicitWidth: viewLoader.item ? (viewLoader.item.item ? viewLoader.item.item.implicitWidth : viewLoader.item.implicitWidth) : 0
+    implicitHeight: viewLoader.item ? (viewLoader.item.item ? viewLoader.item.item.implicitHeight : viewLoader.item.implicitHeight) : 0
 
     Loader {
         id: viewLoader
@@ -70,26 +70,17 @@ Item {
             case IslandState.settingsMode:
                 return settingsView
 
-            case IslandState.weatherMode:
-                return weatherView
-
             case IslandState.systemMenuMode:
                 return systemMenuView
 
             case IslandState.notificationsMode:
                 return notificationsView
 
-            case IslandState.quoteMode:
-                return quoteView
-
             case IslandState.calendarMode:
                 return calendarView
 
             case IslandState.nightLightMode:
                 return nightLightView
-
-            case IslandState.weatherSettingsMode:
-                return weatherSettingsView
 
             case IslandState.trayMode:
                 return trayView
@@ -181,16 +172,6 @@ Item {
     }
 
     Component {
-        id: weatherView
-        WeatherView { }
-    }
-
-    Component {
-        id: weatherSettingsView
-        WeatherSettingsView { }
-    }
-
-    Component {
         id: trayView
         TrayView { }
     }
@@ -203,11 +184,6 @@ Item {
     Component {
         id: notificationsView
         NotificationsView { }
-    }
-
-    Component {
-        id: quoteView
-        QuoteView { }
     }
 
     Component {
@@ -225,6 +201,8 @@ Item {
         Loader {
             source: IslandState.activePluginViewSource
             focus: true
+            width: item ? item.implicitWidth : 0
+            height: item ? item.implicitHeight : 0
         }
     }
 

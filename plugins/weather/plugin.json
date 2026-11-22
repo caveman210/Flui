@@ -1,0 +1,30 @@
+{
+  "id": "weather",
+  "name": "Weather & Forecast",
+  "version": "1.0.0",
+  "author": "caveman210",
+  "description": "Multi-provider realtime weather engine with bar widget, calendar forecast card, and detailed island metrics.",
+  "icon": "󰖐",
+  "category": "productivity",
+  "enabled": true,
+  "deps": [],
+  "entry": {
+    "service": "Service.qml",
+    "settings": "Settings.qml"
+  },
+  "panel": {
+    "view": "WeatherView.qml"
+  },
+  "extensions": [
+    {
+      "slot": "bar.info",
+      "source": "BarWidget.qml",
+      "position": "append"
+    },
+    {
+      "slot": "calendar.weather",
+      "source": "CalendarPill.qml",
+      "position": "append"
+    }
+  ]
+}

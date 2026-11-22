@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import "../config"
+import "../island"
 
 Singleton {
     id: root
@@ -25,6 +26,8 @@ Singleton {
 
     // Active background services declared by enabled plugins
     readonly property var activeServiceEntries: {
+        var _dep1 = ConfigStore.disabledPlugins
+        var _dep2 = ConfigStore.enabledPlugins
         var res = []
         for (var i = 0; i < root.plugins.length; i++) {
             var p = root.plugins[i]
@@ -49,18 +52,56 @@ Singleton {
         function onEnabledPluginsChanged() {
             root.rebuildSlotRegistry()
         }
+        function onDisabledPluginsChanged() {
+            root.rebuildSlotRegistry()
+        }
     }
 
     function isPluginEnabled(id) {
-        return !!root.enabledPluginIds[id]
+        var disabledList = ConfigStore.disabledPlugins || []
+        if (disabledList.indexOf(id) !== -1)
+            return false
+
+        var enabledList = ConfigStore.enabledPlugins || []
+        if (enabledList.indexOf(id) !== -1)
+            return true
+
+        // Plug-and-play: check plugin manifest default enabled state
+        for (var i = 0; i < root.plugins.length; i++) {
+            var p = root.plugins[i]
+            if (p && p.id === id) {
+                return p.enabled !== false
+            }
+        }
+        return false
+    }
+
+    function openView(pluginId, alignment) {
+        var src = root.getPluginViewSource(pluginId)
+        if (src && src.length > 0) {
+            IslandState.activePluginId = pluginId
+            IslandState.activePluginViewSource = src
+            IslandState.activePluginAlignment = alignment || "center"
+            IslandState.mode = IslandState.pluginViewMode
+        } else {
+            console.warn("PluginService: no panel view found for plugin", pluginId)
+        }
     }
 
     function togglePlugin(id) {
-        var current = ConfigStore.enabledPlugins ? ConfigStore.enabledPlugins.slice() : []
-        var idx = current.indexOf(id)
-        if (idx >= 0) {
-            current.splice(idx, 1)
+        var enabled = ConfigStore.enabledPlugins ? ConfigStore.enabledPlugins.slice() : []
+        var disabled = ConfigStore.disabledPlugins ? ConfigStore.disabledPlugins.slice() : []
+        var currentlyOn = root.isPluginEnabled(id)
+
+        if (currentlyOn) {
+            var eIdx = enabled.indexOf(id)
+            if (eIdx !== -1) enabled.splice(eIdx, 1)
+            if (disabled.indexOf(id) === -1) disabled.push(id)
         } else {
+            var dIdx = disabled.indexOf(id)
+            if (dIdx !== -1) disabled.splice(dIdx, 1)
+            if (enabled.indexOf(id) === -1) enabled.push(id)
+
             // Check missing deps before enabling
             for (var i = 0; i < root.plugins.length; i++) {
                 var p = root.plugins[i]
@@ -70,12 +111,11 @@ Singleton {
                     missingDepsNotif.deps = p.missing_deps.join(", ")
                     missingDepsNotif.running = false
                     missingDepsNotif.running = true
-                    // Still enable — plugin may work partially or user chose to proceed
                 }
             }
-            current.push(id)
         }
-        ConfigStore.enabledPlugins = current
+        ConfigStore.enabledPlugins = enabled
+        ConfigStore.disabledPlugins = disabled
         ConfigStore.save()
         rebuildSlotRegistry()
     }

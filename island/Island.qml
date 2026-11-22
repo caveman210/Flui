@@ -67,17 +67,20 @@ Rectangle {
     // the flow-corner arc lands on the bar's straight bottom edge,
     // clear of its rounded corner, so the fillets can join them.
     readonly property real panelDockGap: Theme.radiusLarge + Theme.capsuleRadius
+    readonly property bool panelWeather: barLayout
+        && IslandState.mode === IslandState.pluginViewMode
+        && IslandState.activePluginId === "weather"
     readonly property bool panelLeft: barLayout
         && (IslandState.mode === IslandState.mediaControlsMode
-            || IslandState.mode === IslandState.quoteMode
-            || IslandState.mode === IslandState.notificationsMode)
-    readonly property bool panelWeather: barLayout && IslandState.mode === IslandState.weatherMode
+            || IslandState.mode === IslandState.notificationsMode
+            || (IslandState.mode === IslandState.pluginViewMode && (IslandState.activePluginAlignment === "left" || IslandState.activePluginId === "quote")))
     readonly property bool panelRight: barLayout
         && (IslandState.mode === IslandState.privacyMenuMode
             || IslandState.mode === IslandState.controlCenterMode
             || IslandState.mode === IslandState.wifiMenuMode
             || IslandState.mode === IslandState.bluetoothMenuMode
-            || IslandState.mode === IslandState.trayMode)
+            || IslandState.mode === IslandState.trayMode
+            || (IslandState.mode === IslandState.pluginViewMode && IslandState.activePluginAlignment === "right"))
     readonly property real panelX: !barLayout
         ? 0
         : panelWeather

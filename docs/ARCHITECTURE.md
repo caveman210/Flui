@@ -34,11 +34,10 @@ Data services operate independently from visual UI layers:
   - `ThemeService`: Dynamic Matugen file reader (`Theme.qml`) and external theme switcher.
 - **Hardware & Environment**:
   - `StorageService`: `lsblk`-based filesystem and storage device monitor with percentage thresholds.
-  - `WeatherService`: Multi-provider engine (Open-Meteo, wttr.in, MET Norway, Aggregator) with stale-cache fallback.
   - `NightLightService`: Binary Wayland gamma schedule daemon (3500K–5500K targets). Advanced curve progression is modularized into `plugins/nightlight-curve`.
   - `BatteryService` & `LowBatteryService`: Hardware power monitor prioritizing low-battery alerts in the secondary bubble.
 - **Plugins & Extensibility**:
-  - `PluginService`: Registry scanner and dynamic lifecycle controller for hot-pluggable extensions.
+  - `PluginService`: Registry scanner and dynamic lifecycle controller for hot-pluggable extensions (`plugins/weather`, `plugins/quote`, `plugins/nightlight-curve`, `plugins/gcal-sync`).
   - `ExtensionSlot`: Zero-cost declarative component injection point for bar, CC, settings, calendar, and notification slots.
 - **IPC & System**:
   - `IslandIPC`: Quickshell Unix socket listener bound to target `flui`.

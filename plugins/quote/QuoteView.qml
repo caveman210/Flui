@@ -2,12 +2,10 @@ import QtQuick
 import QtQuick.Layouts
 
 import "../../core"
-import "../../services/motivation"
 import "../../styles"
+import "."
 
 // Quote-of-the-day panel, opened from the bar's greeting/quote line.
-// Typographic hierarchy per the request: the quote as an italic H3,
-// then a small H6 byline underneath.
 FocusScope {
     id: root
 
@@ -35,7 +33,7 @@ FocusScope {
             Layout.fillWidth: true
             text: "QUOTE OF THE DAY"
             color: Theme.textSecondary
-            font.family: "JetBrainsMono Nerd Font"
+            font.family: Theme.iconFont
             font.pixelSize: 10
             font.letterSpacing: 2
             horizontalAlignment: Text.AlignHCenter
@@ -51,7 +49,7 @@ FocusScope {
             color: QuoteService.hasQuote
                     ? Theme.textPrimary
                     : Theme.textSecondary
-            font.family: "JetBrainsMono Nerd Font"
+            font.family: Theme.iconFont
             font.pixelSize: 20
             font.italic: true
             wrapMode: Text.WordWrap
@@ -65,7 +63,7 @@ FocusScope {
                     && QuoteService.author !== ""
             text: "- " + QuoteService.author
             color: Theme.textSecondary
-            font.family: "JetBrainsMono Nerd Font"
+            font.family: Theme.iconFont
             font.pixelSize: 12
             horizontalAlignment: Text.AlignHCenter
         }

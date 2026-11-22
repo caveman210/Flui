@@ -56,6 +56,14 @@ IpcHandler {
         IslandController.openPluginsMenu()
     }
 
+    function openWeather() {
+        IslandController.openWeather()
+    }
+
+    function openQuote() {
+        IslandController.openQuote()
+    }
+
     function cycleLayout() {
         IslandController.cycleLayout()
     }

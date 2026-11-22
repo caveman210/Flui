@@ -7,9 +7,7 @@ import "MotivationUtils.js" as MotivationUtils
 
 // Bar idle line: a time-of-day greeting or one of the short
 // motivational tidbits, chosen per local day with a 70/30 split in
-// favour of the greeting. This is the small text in the bar's empty
-// media slot; the full online quote of the day is QuoteService and
-// opens from that same line.
+// favour of the greeting.
 Singleton {
     id: root
 

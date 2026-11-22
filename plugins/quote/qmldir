@@ -1,0 +1,2 @@
+singleton QuoteService 1.0 QuoteService.qml
+singleton GreetingService 1.0 GreetingService.qml

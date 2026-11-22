@@ -1,15 +1,18 @@
 pragma Singleton
 
 import QtQuick
+import Quickshell
+import Quickshell.Io
 
 // =========================================================
-// DEFAULT THEME (Muted, warm neutral dynamic island fallback)
+// THEME (Dynamic Island with Matugen Palette Synchronization)
 // Relaxed dark obsidian aesthetic: soft zinc/slate neutrals,
 // subtle warm borders, low eye-strain accents.
 // ONLY active if Matugen is not available.
 // =========================================================
 
 QtObject {
+    id: root
     // =========================================================
     // COLORS
     // =========================================================
@@ -135,4 +138,38 @@ QtObject {
     readonly property int animationSlow: 500
     readonly property var animationHorizontal: Easing.OutBack
     readonly property var animationVertical: Easing.OutCubic
+
+    // =========================================================
+    // MATUGEN SYNCHRONIZATION
+    // Ensures plugins and shell always share the exact same palette
+    // =========================================================
+
+    readonly property string _matugenPath: (Quickshell.env("XDG_CONFIG_HOME") !== ""
+        ? Quickshell.env("XDG_CONFIG_HOME") + "/quickshell"
+        : Quickshell.env("HOME") + "/.config/quickshell") + "/styles/themes/matugen/Theme.qml"
+
+    property var _matugenFile: FileView {
+        path: root._matugenPath
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: {
+            root._applyMatugenColors(text())
+        }
+    }
+
+    function _applyMatugenColors(text) {
+        if (!text || text.trim().length === 0) return
+        var regex = /property\s+color\s+(\w+):\s*"([^"]+)"/g
+        var match
+        while ((match = regex.exec(text)) !== null) {
+            var key = match[1]
+            var value = match[2]
+            if (root[key] !== undefined)
+                root[key] = value
+        }
+    }
+
+    Component.onCompleted: {
+        _matugenFile.reload()
+    }
 }
