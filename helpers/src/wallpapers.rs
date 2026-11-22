@@ -12,8 +12,8 @@ pub struct WallpaperItem {
 
 pub fn run(dir_path: Option<String>) {
     let target_dir = match dir_path {
-        Some(d) => PathBuf::from(d),
-        None => {
+        Some(d) if !d.trim().is_empty() => PathBuf::from(d),
+        _ => {
             let home = env::var("HOME").unwrap_or_else(|_| ".".into());
             PathBuf::from(home).join("Pictures/Wallpapers")
         }

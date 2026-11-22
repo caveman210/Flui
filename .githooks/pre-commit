@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -e
+
+# Format staged Rust files
+if command -v rustfmt >/dev/null 2>&1; then
+    staged_rs=$(git diff --cached --name-only --diff-filter=ACM | grep '\.rs$' || true)
+    if [ -n "$staged_rs" ]; then
+        echo "==> Formatting staged Rust files with rustfmt..."
+        echo "$staged_rs" | xargs rustfmt
+        echo "$staged_rs" | xargs git add
+    fi
+fi
+
+# Format staged JSON, YAML with Prettier
+staged_prettier=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(json|yml|yaml)$' || true)
+if [ -n "$staged_prettier" ]; then
+    echo "==> Formatting staged files with Prettier..."
+    npx --yes prettier --write $staged_prettier >/dev/null 2>&1 || true
+    echo "$staged_prettier" | xargs git add
+fi
+
+# Lint staged Python scripts
+staged_py=$(git diff --cached --name-only --diff-filter=ACM | grep '\.py$' || true)
+if [ -n "$staged_py" ]; then
+    echo "==> Syntax checking staged Python scripts..."
+    for py in $staged_py; do
+        python3 -m py_compile "$py"
+    done
+fi
+
+# Lint staged Shell scripts
+staged_sh=$(git diff --cached --name-only --diff-filter=ACM | grep '\.sh$' || true)
+if [ -n "$staged_sh" ]; then
+    echo "==> Syntax checking staged Shell scripts..."
+    for sh in $staged_sh; do
+        bash -n "$sh"
+    done
+fi
+
+echo "Pre-commit checks and formatting complete."

@@ -14,6 +14,9 @@ FocusScope {
 
     Component.onCompleted: {
         forceActiveFocus()
+        if (!QuoteService.hasQuote) {
+            QuoteService.refresh()
+        }
     }
 
     Keys.onPressed: function(event) {
@@ -29,14 +32,41 @@ FocusScope {
         anchors.margins: 28
         spacing: 16
 
-        Text {
+        RowLayout {
             Layout.fillWidth: true
-            text: "QUOTE OF THE DAY"
-            color: Theme.textSecondary
-            font.family: Theme.iconFont
-            font.pixelSize: 10
-            font.letterSpacing: 2
-            horizontalAlignment: Text.AlignHCenter
+            spacing: 8
+
+            Item { Layout.fillWidth: true }
+
+            Text {
+                text: "QUOTE OF THE DAY"
+                color: Theme.textSecondary
+                font.family: Theme.iconFont
+                font.pixelSize: 10
+                font.letterSpacing: 2
+            }
+
+            Item { Layout.fillWidth: true }
+
+            Rectangle {
+                width: 26
+                height: 26
+                radius: 13
+                color: refreshHover.hovered ? Theme.surfaceVariant : "transparent"
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "󰑐"
+                    font.family: Theme.iconFont
+                    font.pixelSize: 13
+                    color: QuoteService.loading ? Theme.accent : Theme.textSecondary
+                }
+
+                HoverHandler { id: refreshHover }
+                TapHandler {
+                    onTapped: QuoteService.refresh()
+                }
+            }
         }
 
         Text {

@@ -57,7 +57,7 @@ Singleton {
 
     function setPollInterval(mins) {
         root.pollIntervalMins = Math.max(1, Math.min(60, mins || 5))
-        pollTimer.interval = root.pollIntervalMins * 60 * 1000
+        if (pollTimer) pollTimer.interval = root.pollIntervalMins * 60 * 1000
         saveConfig()
     }
 
@@ -98,7 +98,7 @@ Singleton {
                     if (data.location !== undefined) root.locationOverride = data.location
                     if (data.pollIntervalMins) {
                         root.pollIntervalMins = data.pollIntervalMins
-                        pollTimer.interval = root.pollIntervalMins * 60 * 1000
+                        if (pollTimer) pollTimer.interval = root.pollIntervalMins * 60 * 1000
                     }
                 } catch (e) {
                     // Default config will be used
@@ -121,6 +121,8 @@ Singleton {
         var loc = root.locationOverride ? root.locationOverride.trim() : ""
         fetchProc.command = [
             Quickshell.env("HOME") + "/.config/quickshell/helpers/target/release/flui-helper",
+            "plugins",
+            "run",
             "weather",
             prov,
             loc
@@ -160,7 +162,7 @@ Singleton {
                         root.icon = data.icon || "󰖐"
                         root.city = data.city || ""
                         root.providerName = data.providerName || data.provider || "Weather"
-                        root.lastUpdated = data.updated || ""
+                        root.lastUpdated = data.updated || Qt.formatTime(new Date(), "h:mm ap")
                         root.lastUpdatedTimestamp = Date.now()
                         root.loaded = true
                         root.errorMessage = ""
@@ -172,6 +174,10 @@ Singleton {
                     root.errorMessage = "Parse error"
                 }
             }
+        }
+
+        onExited: function(exitCode, exitStatus) {
+            root.loading = false
         }
     }
 

@@ -47,13 +47,8 @@ Singleton {
     function refresh() {
         var now = new Date()
         var seed = MotivationUtils.dailySeed(now.getTime())
-
-        // 70/30 in favour of the greeting, not 50/50.
-        showingTidbit = seed % 10 >= 7
-
-        text = showingTidbit
-                ? tidbits[(seed >>> 8) % tidbits.length]
-                : timeOfDayGreeting(now)
+        showingTidbit = true
+        text = tidbits[(seed >>> 8) % tidbits.length]
     }
 
     Component.onCompleted: refresh()

@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import "../config"
 import "../island"
+import "../core"
 
 Singleton {
     id: root
@@ -118,6 +119,10 @@ Singleton {
         ConfigStore.disabledPlugins = disabled
         ConfigStore.save()
         rebuildSlotRegistry()
+
+        if (IslandState.activePluginId === id && !root.isPluginEnabled(id)) {
+            IslandController.reset()
+        }
     }
 
     // Returns array of component sources targeting a specific slot:

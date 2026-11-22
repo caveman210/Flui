@@ -25,6 +25,22 @@ pub struct WeatherData {
     pub updated: String,
 }
 
+#[tokio::main(flavor = "current_thread")]
+async fn main() {
+    let args: Vec<String> = env::args().collect();
+    let provider = if args.len() > 1 && !args[1].trim().is_empty() {
+        Some(args[1].clone())
+    } else {
+        None
+    };
+    let location = if args.len() > 2 && !args[2].trim().is_empty() {
+        Some(args[2].clone())
+    } else {
+        None
+    };
+    run(provider, location).await;
+}
+
 pub async fn run(provider_opt: Option<String>, location_opt: Option<String>) {
     let provider = provider_opt.unwrap_or_else(|| "aggregator".to_string());
     let location = location_opt.unwrap_or_default();
@@ -35,7 +51,7 @@ pub async fn run(provider_opt: Option<String>, location_opt: Option<String>) {
         "wttr" => fetch_wttr(&location).await,
         "openmeteo" | "open-meteo" => fetch_openmeteo(&location).await,
         "metno" => fetch_metno(&location).await,
-        _ => fetch_aggregator(&location).await, // default to aggregator
+        _ => fetch_aggregator(&location).await,
     };
 
     match result {
@@ -110,19 +126,18 @@ async fn fetch_wttr(location: &str) -> Result<WeatherData, Box<dyn std::error::E
         humidity: format!("{}%", humidity),
         wind: format!("{} km/h", wind_kmph),
         condition: desc.to_string(),
-        icon: wttr_code_to_icon(weather_code),
+        icon: wttr_code_to_icon(weather_code, !is_night_time()),
         city,
         provider_name: "wttr.in".to_string(),
         provider: "wttr".to_string(),
-        updated: "Just now".to_string(),
+        updated: current_time_str(),
     })
 }
 
 async fn fetch_openmeteo(location: &str) -> Result<WeatherData, Box<dyn std::error::Error>> {
-    // If location given, geocode or fallback to wttr coords
     let (lat, lon, city) = resolve_coordinates(location).await?;
     let url = format!(
-        "https://api.open-meteo.com/v1/forecast?latitude={}&longitude={}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,surface_pressure,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,uv_index_max&timezone=auto",
+        "https://api.open-meteo.com/v1/forecast?latitude={}&longitude={}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,surface_pressure,pressure_msl,wind_speed_10m,is_day,uv_index&daily=temperature_2m_max,temperature_2m_min,uv_index_max&timezone=auto",
         lat, lon
     );
 
@@ -139,16 +154,21 @@ async fn fetch_openmeteo(location: &str) -> Result<WeatherData, Box<dyn std::err
     let feels_val = curr.get("apparent_temperature").and_then(|t| t.as_f64()).unwrap_or(temp_val as f64).round() as i32;
     let humidity = curr.get("relative_humidity_2m").and_then(|h| h.as_f64()).unwrap_or(0.0).round() as i32;
     let wind = curr.get("wind_speed_10m").and_then(|w| w.as_f64()).unwrap_or(0.0).round() as i32;
-    let pressure = curr.get("surface_pressure").and_then(|p| p.as_f64()).unwrap_or(1013.0).round() as i32;
+    let pressure = curr.get("pressure_msl")
+        .and_then(|p| p.as_f64())
+        .or_else(|| curr.get("surface_pressure").and_then(|p| p.as_f64()))
+        .unwrap_or(1013.0)
+        .round() as i32;
+    let uv = curr.get("uv_index").and_then(|u| u.as_f64()).unwrap_or(0.0);
     let precip = curr.get("precipitation").and_then(|p| p.as_f64()).unwrap_or(0.0);
     let code = curr.get("weather_code").and_then(|c| c.as_i64()).unwrap_or(0) as i32;
+    let is_day = curr.get("is_day").and_then(|d| d.as_i64()).map(|d| d == 1).unwrap_or_else(|| !is_night_time());
 
     let daily = v.get("daily");
     let high = daily.and_then(|d| d.get("temperature_2m_max")).and_then(|a| a.get(0)).and_then(|t| t.as_f64()).unwrap_or(temp_val as f64).round() as i32;
     let low = daily.and_then(|d| d.get("temperature_2m_min")).and_then(|a| a.get(0)).and_then(|t| t.as_f64()).unwrap_or(temp_val as f64).round() as i32;
-    let uv = daily.and_then(|d| d.get("uv_index_max")).and_then(|a| a.get(0)).and_then(|u| u.as_f64()).unwrap_or(0.0);
 
-    let (icon, cond) = wmo_code_to_info(code);
+    let (icon, cond) = wmo_code_to_info(code, is_day);
 
     Ok(WeatherData {
         success: true,
@@ -166,7 +186,7 @@ async fn fetch_openmeteo(location: &str) -> Result<WeatherData, Box<dyn std::err
         city,
         provider_name: "Open-Meteo".to_string(),
         provider: "openmeteo".to_string(),
-        updated: "Just now".to_string(),
+        updated: current_time_str(),
     })
 }
 
@@ -208,24 +228,22 @@ async fn fetch_metno(location: &str) -> Result<WeatherData, Box<dyn std::error::
         precip: "0 mm".to_string(),
         humidity: format!("{}%", humidity),
         wind: format!("{} km/h", wind * 36 / 10),
-        condition: "Fair".to_string(),
-        icon: "󰖙".to_string(),
+        condition: if !is_night_time() { "Fair".to_string() } else { "Clear Night".to_string() },
+        icon: if !is_night_time() { "󰖙".to_string() } else { "󰖔".to_string() },
         city,
         provider_name: "MET Norway".to_string(),
         provider: "metno".to_string(),
-        updated: "Just now".to_string(),
+        updated: current_time_str(),
     })
 }
 
 async fn fetch_aggregator(location: &str) -> Result<WeatherData, Box<dyn std::error::Error>> {
-    // Run Open-Meteo and wttr concurrently; merge consensus
     let om_fut = fetch_openmeteo(location);
     let wttr_fut = fetch_wttr(location);
 
     let (om_res, wttr_res) = tokio::join!(om_fut, wttr_fut);
 
     if let (Ok(om), Ok(wt)) = (om_res, wttr_res) {
-        // Consensus average
         let om_t = om.temp.trim_end_matches("°C").parse::<f64>().unwrap_or(0.0);
         let wt_t = wt.temp.trim_end_matches("°C").parse::<f64>().unwrap_or(0.0);
         let avg = ((om_t + wt_t) / 2.0).round() as i32;
@@ -246,7 +264,7 @@ async fn fetch_aggregator(location: &str) -> Result<WeatherData, Box<dyn std::er
             city: if !om.city.is_empty() { om.city } else { wt.city },
             provider_name: "Aggregator (Consensus)".to_string(),
             provider: "aggregator".to_string(),
-            updated: "Just now".to_string(),
+            updated: current_time_str(),
         });
     }
 
@@ -276,7 +294,6 @@ async fn resolve_coordinates(location: &str) -> Result<(f64, f64, String), Box<d
         }
     }
 
-    // IP geolocation via wttr
     let client = reqwest::Client::builder().timeout(Duration::from_secs(3)).build()?;
     if let Ok(resp) = client.get("https://wttr.in/?format=j1").send().await {
         if let Ok(v) = resp.json::<serde_json::Value>().await {
@@ -292,7 +309,52 @@ async fn resolve_coordinates(location: &str) -> Result<(f64, f64, String), Box<d
     Ok((8.5241, 76.9366, "Thiruvananthapuram".to_string()))
 }
 
-fn wmo_code_to_info(code: i32) -> (String, String) {
+fn current_time_str() -> String {
+    let mut now: libc::time_t = 0;
+    unsafe {
+        libc::time(&mut now);
+        let mut tm: libc::tm = std::mem::zeroed();
+        libc::localtime_r(&now, &mut tm);
+        let hour = tm.tm_hour;
+        let min = tm.tm_min;
+        let (h12, ampm) = if hour == 0 {
+            (12, "AM")
+        } else if hour < 12 {
+            (hour, "AM")
+        } else if hour == 12 {
+            (12, "PM")
+        } else {
+            (hour - 12, "PM")
+        };
+        format!("{}:{:02} {}", h12, min, ampm)
+    }
+}
+
+fn is_night_time() -> bool {
+    let mut now: libc::time_t = 0;
+    unsafe {
+        libc::time(&mut now);
+        let mut tm: libc::tm = std::mem::zeroed();
+        libc::localtime_r(&now, &mut tm);
+        tm.tm_hour < 6 || tm.tm_hour >= 18
+    }
+}
+
+fn wmo_code_to_info(code: i32, is_day: bool) -> (String, String) {
+    if !is_day {
+        return match code {
+            0 => ("󰖔".to_string(), "Clear Night".to_string()),
+            1 | 2 => ("󰼱".to_string(), "Partly Cloudy".to_string()),
+            3 => ("󰖐".to_string(), "Overcast".to_string()),
+            45 | 48 => ("󰖑".to_string(), "Fog".to_string()),
+            51 | 53 | 55 => ("󰖗".to_string(), "Drizzle".to_string()),
+            61 | 63 | 65 | 80 | 81 | 82 => ("󰖖".to_string(), "Rain".to_string()),
+            71 | 73 | 75 | 85 | 86 => ("󰖘".to_string(), "Snow".to_string()),
+            95 | 96 | 99 => ("󰖓".to_string(), "Thunderstorm".to_string()),
+            _ => ("󰖐".to_string(), "Overcast".to_string()),
+        };
+    }
+
     match code {
         0 => ("󰖙".to_string(), "Clear Sky".to_string()),
         1 | 2 => ("󰖕".to_string(), "Partly Cloudy".to_string()),
@@ -306,10 +368,10 @@ fn wmo_code_to_info(code: i32) -> (String, String) {
     }
 }
 
-fn wttr_code_to_icon(code: &str) -> String {
+fn wttr_code_to_icon(code: &str, is_day: bool) -> String {
     match code {
-        "113" => "󰖙".to_string(),
-        "116" => "󰖕".to_string(),
+        "113" => if is_day { "󰖙".to_string() } else { "󰖔".to_string() },
+        "116" => if is_day { "󰖕".to_string() } else { "󰼱".to_string() },
         "119" | "122" => "󰖐".to_string(),
         "143" | "248" | "260" => "󰖑".to_string(),
         "176" | "263" | "266" | "293" | "296" | "299" | "302" | "305" | "308" => "󰖖".to_string(),

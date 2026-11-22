@@ -23,8 +23,10 @@ Singleton {
     property double nextAttempt: 0
 
     function refresh() {
-        if (fetchProcess.running)
-            return
+        nextAttempt = 0
+        if (fetchProcess.running) {
+            fetchProcess.running = false
+        }
 
         loading = true
         fetchProcess.running = true
@@ -70,7 +72,7 @@ Singleton {
         return true
     }
 
-    Component.onCompleted: ensureToday()
+    Component.onCompleted: root.ensureToday()
 
     Timer {
         interval: 60 * 1000
@@ -84,6 +86,8 @@ Singleton {
         id: fetchProcess
         command: [
             Quickshell.env("HOME") + "/.config/quickshell/helpers/target/release/flui-helper",
+            "plugins",
+            "run",
             "quote"
         ]
 

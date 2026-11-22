@@ -62,11 +62,17 @@ Singleton {
 
     Process {
         id: scanProcess
-        command: [
-            Quickshell.env("HOME") + "/.config/quickshell/helpers/target/release/flui-helper",
-            "wallpapers",
-            (ConfigStore.wallpaperDir || "").replace("~", Quickshell.env("HOME"))
-        ]
+        command: {
+            var cmd = [
+                Quickshell.env("HOME") + "/.config/quickshell/helpers/target/release/flui-helper",
+                "wallpapers"
+            ]
+            var dir = (ConfigStore.wallpaperDir || "").replace("~", Quickshell.env("HOME")).trim()
+            if (dir.length > 0) {
+                cmd.push(dir)
+            }
+            return cmd
+        }
 
         stdout: StdioCollector {
             onStreamFinished: {

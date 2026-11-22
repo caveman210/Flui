@@ -1,0 +1,6 @@
+target/
+result/
+**/target/
+.git/
+node_modules/
+**/*.js
