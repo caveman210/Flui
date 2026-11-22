@@ -6,6 +6,7 @@ mod wallpapers;
 mod quote;
 mod storage;
 mod brightness;
+mod battery;
 
 use std::env;
 
@@ -20,6 +21,7 @@ fn print_usage() {
     println!("  flui-helper quote");
     println!("  flui-helper storage");
     println!("  flui-helper brightness [set_pct]");
+    println!("  flui-helper battery");
 }
 
 #[tokio::main(flavor = "current_thread")]
@@ -88,6 +90,9 @@ async fn main() {
                 None
             };
             brightness::run(target);
+        }
+        "battery" => {
+            battery::run();
         }
         _ => {
             print_usage();

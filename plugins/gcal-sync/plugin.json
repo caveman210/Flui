@@ -1,0 +1,17 @@
+{
+  "id": "gcal-sync",
+  "name": "Google Calendar Sync",
+  "version": "1.0.0",
+  "author": "Caveman",
+  "description": "Seamless Google Calendar sync with OAuth login & live Island calendar integration.",
+  "icon": "󰃭",
+  "category": "productivity",
+  "enabled": true,
+  "extensions": [
+    {
+      "slot": "calendar.events",
+      "source": "GCalAgenda.qml",
+      "position": "append"
+    }
+  ]
+}

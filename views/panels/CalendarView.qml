@@ -7,6 +7,7 @@ import "../../core"
 import "../../styles"
 import "../../services"
 import "../../island"
+import "../../components/common"
 
 FocusScope {
     id: root
@@ -261,6 +262,12 @@ FocusScope {
 
             HoverHandler { cursorShape: Qt.PointingHandCursor }
             TapHandler { onTapped: IslandController.openWeather() }
+        }
+
+        // Extensibility Slot: Calendar Events & Agenda
+        ExtensionSlot {
+            slotName: "calendar.events"
+            Layout.fillWidth: true
         }
     }
 }

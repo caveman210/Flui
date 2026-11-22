@@ -93,6 +93,9 @@ Item {
 
             case IslandState.trayMode:
                 return trayView
+
+            case IslandState.pluginsMenuMode:
+                return pluginsMenuView
             }
 
             return null
@@ -207,6 +210,11 @@ Item {
     Component {
         id: calendarView
         CalendarView { }
+    }
+
+    Component {
+        id: pluginsMenuView
+        PluginsMenuView { }
     }
 
     Component {

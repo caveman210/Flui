@@ -238,8 +238,9 @@ Item {
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: LowBatteryService.icon
-                color: LowBatteryService.percentage <= 10 ? Theme.danger : Theme.warning
+                text: LowBatteryService.isOverLimit ? "󰂃" : (LowBatteryService.isNearChargeLimit ? "󰂄" : LowBatteryService.icon)
+                // Over limit: Light green (Theme.success / #4ADE80)
+                color: LowBatteryService.isOverLimit ? Theme.success : (LowBatteryService.isNearChargeLimit ? Theme.accent : (LowBatteryService.percentage <= 10 ? Theme.danger : Theme.warning))
                 font.family: "JetBrainsMono Nerd Font"
                 font.pixelSize: 15
             }

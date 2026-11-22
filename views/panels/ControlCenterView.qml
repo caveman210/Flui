@@ -18,6 +18,7 @@ import "../../services/shell"
 import "../../services/system"
 import "../../island"
 import "../../config"
+import "../../components/common"
 
 FocusScope {
     id: root
@@ -239,6 +240,12 @@ FocusScope {
                 HoverHandler { cursorShape: Qt.PointingHandCursor }
                 TapHandler { onTapped: PowerProfileService.cycleProfile() }
             }
+        }
+
+        // Extensibility Slot: Custom Control Center Cards
+        ExtensionSlot {
+            slotName: "controlCenter.cards"
+            Layout.fillWidth: true
         }
 
         // Sliders at bottom: fully rounded capsule sliders

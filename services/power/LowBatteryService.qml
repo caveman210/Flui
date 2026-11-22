@@ -43,8 +43,40 @@ Singleton {
 
     // Shows the low-battery indicator when capacity drops below this.
     readonly property int threshold: 20
-    readonly property bool active: available && percentage <= threshold && !charging
-    readonly property string displayText: percentage + "%"
+    readonly property bool isLow: available && percentage <= threshold && !charging
+
+    // Dynamic battery limit detected via flui-helper
+    property int chargeLimit: 80
+    property bool hasChargeLimit: true
+    readonly property bool isOverLimit: available && pluggedIn && hasChargeLimit && percentage > chargeLimit
+    readonly property bool isNearChargeLimit: available && pluggedIn && hasChargeLimit && percentage >= (chargeLimit - 5) && !isOverLimit
+    readonly property bool active: isLow || isNearChargeLimit || isOverLimit
+    readonly property string displayText: isOverLimit
+        ? (percentage + "% (! Over Limit)")
+        : (isNearChargeLimit ? (percentage + "% (Unplug)") : (percentage + "%"))
+
+    Process {
+        id: limitDetector
+        command: [
+            Quickshell.env("HOME") + "/.config/quickshell/helpers/target/release/flui-helper",
+            "battery"
+        ]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    var data = JSON.parse(text.trim())
+                    root.chargeLimit = data.limit || 80
+                    root.hasChargeLimit = data.has_limit
+                } catch (e) {
+                    console.warn("LowBatteryService: error parsing battery limit", e)
+                }
+            }
+        }
+    }
+
+    Component.onCompleted: {
+        limitDetector.running = true
+    }
 
     property int lastNotifiedThreshold: 100
 

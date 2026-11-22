@@ -31,6 +31,11 @@ QtObject {
             IslandState.powerMenuMode
     }
 
+    function openPluginsMenu() {
+        IslandState.mode =
+            IslandState.pluginsMenuMode
+    }
+
     function openControlCenter() {
         IslandState.mode =
             IslandState.controlCenterMode

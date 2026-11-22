@@ -27,6 +27,7 @@ QtObject {
     readonly property int nightLightMode: 16
     readonly property int weatherSettingsMode: 17
     readonly property int trayMode: 18
+    readonly property int pluginsMenuMode: 19
 
     // =========================================================
     // LAYOUT
@@ -127,7 +128,8 @@ QtObject {
         mode === weatherMode ||
         mode === nightLightMode ||
         mode === weatherSettingsMode ||
-        mode === trayMode
+        mode === trayMode ||
+        mode === pluginsMenuMode
 
     // Bar layout: a view drops down below the bar in the panel slot.
     readonly property bool barPanelOpen: layoutIsBar && mode !== defaultMode

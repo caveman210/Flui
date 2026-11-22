@@ -348,7 +348,7 @@ FocusScope {
                     anchors.centerIn: parent
                     spacing: 6
                     Text { text: "󰸉"; font.family: Theme.iconFont; font.pixelSize: 14; color: Theme.accent }
-                    Text { text: "Wallpapers"; color: Theme.textPrimary; font.pixelSize: 12; font.bold: true }
+                    Text { text: "Wallpapers"; color: Theme.textPrimary; font.pixelSize: 11; font.bold: true }
                 }
                 HoverHandler { cursorShape: Qt.PointingHandCursor }
                 TapHandler { onTapped: IslandController.openWallpaperSelector() }
@@ -365,8 +365,26 @@ FocusScope {
                 RowLayout {
                     anchors.centerIn: parent
                     spacing: 6
+                    Text { text: "󰏖"; font.family: Theme.iconFont; font.pixelSize: 14; color: Theme.accent }
+                    Text { text: "Plugins"; color: Theme.textPrimary; font.pixelSize: 11; font.bold: true }
+                }
+                HoverHandler { cursorShape: Qt.PointingHandCursor }
+                TapHandler { onTapped: IslandController.openPluginsMenu() }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                height: 40
+                radius: 10
+                color: Theme.surface
+                border.width: 1
+                border.color: Theme.border
+
+                RowLayout {
+                    anchors.centerIn: parent
+                    spacing: 6
                     Text { text: SystemService.osIcon; font.family: Theme.iconFont; font.pixelSize: 14; color: Theme.accent }
-                    Text { text: "System Info"; color: Theme.textPrimary; font.pixelSize: 12; font.bold: true }
+                    Text { text: "System"; color: Theme.textPrimary; font.pixelSize: 11; font.bold: true }
                 }
                 HoverHandler { cursorShape: Qt.PointingHandCursor }
                 TapHandler { onTapped: IslandController.openSystemMenu() }

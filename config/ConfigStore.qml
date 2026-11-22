@@ -63,6 +63,9 @@ Singleton {
         "hyprlock": false
     })
 
+    // Plugins Settings
+    property var enabledPlugins: []
+
     property bool loaded: false
     property bool isSaving: false
 
@@ -92,7 +95,8 @@ Singleton {
             "wallpaperDir": root.wallpaperDir,
             "firstRunCompleted": root.firstRunCompleted,
             "matugenEnabled": root.matugenEnabled,
-            "themedApps": root.themedApps
+            "themedApps": root.themedApps,
+            "enabledPlugins": root.enabledPlugins
         }
 
         var jsonStr = JSON.stringify(data, null, 2)
@@ -141,6 +145,9 @@ Singleton {
         if (json.matugenEnabled !== undefined) root.matugenEnabled = json.matugenEnabled
         if (json.themedApps !== undefined && typeof json.themedApps === "object") {
             root.themedApps = Object.assign({}, root.themedApps, json.themedApps)
+        }
+        if (json.enabledPlugins !== undefined && Array.isArray(json.enabledPlugins)) {
+            root.enabledPlugins = json.enabledPlugins
         }
 
         root.loaded = true

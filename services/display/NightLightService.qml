@@ -59,93 +59,29 @@ Singleton {
     property var lastScheduledTarget: null
 
     // -------------------------------------------------------------
-    // Curve evaluation (dy/dx progression)
+    // Schedule Calculation (Binary State: On during night, Off during day)
+    // Avoids killing and re-spawning gammastep every few seconds.
     // -------------------------------------------------------------
-    function evaluateCurveProgress(t) {
-        var clampedT = Math.max(0.0, Math.min(1.0, t))
-        var curve = ConfigStore.nightLightCurveType
-
-        if (curve === "linear") {
-            return clampedT
-        } else if (curve === "ease_in") {
-            return clampedT * clampedT
-        } else if (curve === "ease_out") {
-            return 1.0 - (1.0 - clampedT) * (1.0 - clampedT)
-        } else if (curve === "custom") {
-            var pts = ConfigStore.nightLightControlPoints
-            if (pts && pts.length >= 2) {
-                // Find segment
-                for (var i = 0; i < pts.length - 1; i++) {
-                    var p0 = pts[i]
-                    var p1 = pts[i + 1]
-                    if (clampedT >= p0.x && clampedT <= p1.x) {
-                        var segSpan = Math.max(0.0001, p1.x - p0.x)
-                        var localT = (clampedT - p0.x) / segSpan
-                        // Smooth cubic interpolation between p0.y and p1.y
-                        var smooth = localT * localT * (3.0 - 2.0 * localT)
-                        return Math.max(0.0, Math.min(1.0, p0.y + smooth * (p1.y - p0.y)))
-                    }
-                }
-                return Math.max(0.0, Math.min(1.0, pts[pts.length - 1].y))
-            }
-            return clampedT
-        } else {
-            // Default: S-Curve (Smoothstep)
-            return clampedT * clampedT * (3.0 - 2.0 * clampedT)
-        }
-    }
-
-    // -------------------------------------------------------------
-    // Schedule Calculation
-    // -------------------------------------------------------------
-    function getScheduleState(startStr, endStr, durationMins) {
+    function isInSchedule(startStr, endStr) {
         var now = new Date()
-        var curMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60.0
+        var curMin = now.getHours() * 60 + now.getMinutes()
 
         var s = (startStr || "20:00").split(":")
         var e = (endStr || "07:00").split(":")
         var startMin = parseInt(s[0], 10) * 60 + parseInt(s[1] || "0", 10)
         var endMin = parseInt(e[0], 10) * 60 + parseInt(e[1] || "0", 10)
-        var dur = Math.max(1, durationMins || 15)
-
-        var inSchedule = false
-        var elapsedSinceStart = 0
 
         if (startMin <= endMin) {
-            inSchedule = curMin >= startMin && curMin < endMin
-            elapsedSinceStart = curMin - startMin
+            return curMin >= startMin && curMin < endMin
         } else {
-            inSchedule = curMin >= startMin || curMin < endMin
-            if (curMin >= startMin) {
-                elapsedSinceStart = curMin - startMin
-            } else {
-                elapsedSinceStart = (24 * 60 - startMin) + curMin
-            }
-        }
-
-        if (!inSchedule) {
-            return { "active": false, "progress": 0.0, "targetTemp": 6500 }
-        }
-
-        var progress = Math.min(1.0, Math.max(0.0, elapsedSinceStart / dur))
-        var curveVal = evaluateCurveProgress(progress)
-
-        var targetWarmth = ConfigStore.nightLightTargetTemp || 4500
-        var neutral = 6500
-        var calculatedTemp = Math.round(neutral - curveVal * (neutral - targetWarmth))
-
-        return {
-            "active": true,
-            "progress": progress,
-            "curveValue": curveVal,
-            "targetTemp": calculatedTemp
+            return curMin >= startMin || curMin < endMin
         }
     }
 
-    // Timer checking every 15 seconds for smooth stepped transitions
+    // Schedule check timer (runs once a minute, no micro-stepping)
     Timer {
         id: scheduleTimer
-        interval: 15000
+        interval: 60000
         repeat: true
         running: ConfigStore.nightLightSchedule && root.available
         triggeredOnStart: true
@@ -153,7 +89,6 @@ Singleton {
     }
 
     function recheckSchedule() {
-        root.lastScheduledTarget = null
         root.checkSchedule()
     }
 
@@ -161,13 +96,19 @@ Singleton {
         if (!ConfigStore.nightLightSchedule || !root.available)
             return
 
-        var state = getScheduleState(
-            ConfigStore.nightLightStart,
-            ConfigStore.nightLightEnd,
-            ConfigStore.nightLightTransitionMins
-        )
+        var shouldBeOn = isInSchedule(ConfigStore.nightLightStart, ConfigStore.nightLightEnd)
+        var targetTemp = ConfigStore.nightLightTargetTemp || 4500
 
-        if (!state.active) {
+        if (shouldBeOn) {
+            if (!root.enabled || root.currentTemp !== targetTemp) {
+                root.wantOn = true
+                root.hasWant = true
+                root.retries = 0
+                root.enabled = true
+                root.currentTemp = targetTemp
+                root.reconcile()
+            }
+        } else {
             if (root.enabled || root.currentTemp !== 6500) {
                 root.wantOn = false
                 root.hasWant = true
@@ -176,17 +117,6 @@ Singleton {
                 root.currentTemp = 6500
                 root.reconcile()
             }
-            return
-        }
-
-        // Active schedule: check if temp needs update
-        if (!root.enabled || Math.abs(root.currentTemp - state.targetTemp) >= 50) {
-            root.wantOn = true
-            root.hasWant = true
-            root.retries = 0
-            root.enabled = true
-            root.currentTemp = state.targetTemp
-            root.reconcile()
         }
     }
 
