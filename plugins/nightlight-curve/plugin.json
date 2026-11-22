@@ -1,0 +1,21 @@
+{
+  "id": "nightlight-curve",
+  "name": "Night Light & Curve Engine",
+  "version": "1.0.0",
+  "author": "Caveman",
+  "description": "Custom S-curve and Bézier transition progression for Wayland color temperature.",
+  "icon": "󰔎",
+  "category": "system",
+  "enabled": false,
+  "deps": ["gammastep"],
+  "entry": {
+    "settings": "Settings.qml"
+  },
+  "extensions": [
+    {
+      "slot": "nightlight.curve",
+      "source": "components/CurveEditor.qml",
+      "position": "append"
+    }
+  ]
+}

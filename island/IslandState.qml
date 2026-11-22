@@ -28,6 +28,11 @@ QtObject {
     readonly property int weatherSettingsMode: 17
     readonly property int trayMode: 18
     readonly property int pluginsMenuMode: 19
+    readonly property int pluginViewMode: 20
+
+    // Dynamic plugin view state
+    property string activePluginId: ""
+    property string activePluginViewSource: ""
 
     // =========================================================
     // LAYOUT
@@ -129,7 +134,8 @@ QtObject {
         mode === nightLightMode ||
         mode === weatherSettingsMode ||
         mode === trayMode ||
-        mode === pluginsMenuMode
+        mode === pluginsMenuMode ||
+        mode === pluginViewMode
 
     // Bar layout: a view drops down below the bar in the panel slot.
     readonly property bool barPanelOpen: layoutIsBar && mode !== defaultMode

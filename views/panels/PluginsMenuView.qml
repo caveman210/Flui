@@ -17,10 +17,14 @@ FocusScope {
     readonly property int visibleItemCount: Math.min(4, Math.max(1, root.filteredPlugins.length))
     readonly property int listHeight: root.filteredPlugins.length === 0 ? 80 : (visibleItemCount * 74)
 
-    implicitHeight: layout.implicitHeight + 36
+    // Dynamically resize window height: expands to fit plugin settings, or caps with scrollbar if tall
+    implicitHeight: root.activeConfigPlugin !== null
+        ? Math.min(600, settingsFlickable.Layout.preferredHeight + 72)
+        : (layout.implicitHeight + 36)
 
     property string searchQuery: ""
     property string activeCategory: "all"
+    property var activeConfigPlugin: null
 
     readonly property var filteredPlugins: {
         var list = PluginService.plugins || []
@@ -52,6 +56,7 @@ FocusScope {
 
     ColumnLayout {
         id: layout
+        visible: root.activeConfigPlugin === null
         anchors.fill: parent
         anchors.margins: 16
         spacing: 14
@@ -312,6 +317,45 @@ FocusScope {
                             }
                         }
 
+                        // Individual Plugin Settings Button
+                        // STRICT RULE: Visible ONLY when the plugin is enabled AND provides settings
+                        Rectangle {
+                            visible: isEnabled && !!modelData.settings_entry
+                            implicitWidth: settingsBtnRow.implicitWidth + 16
+                            implicitHeight: 26
+                            radius: 13
+                            color: gearHover.hovered ? Theme.buttonHover : Theme.surfaceVariant
+                            border.color: Theme.border
+                            border.width: 1
+
+                            RowLayout {
+                                id: settingsBtnRow
+                                anchors.centerIn: parent
+                                spacing: 4
+
+                                Text {
+                                    text: "󰒓"
+                                    color: Theme.accent
+                                    font.family: Theme.iconFont
+                                    font.pixelSize: 12
+                                }
+
+                                Text {
+                                    text: "Settings"
+                                    color: Theme.textPrimary
+                                    font.pixelSize: 10
+                                    font.bold: true
+                                }
+                            }
+
+                            HoverHandler { id: gearHover; cursorShape: Qt.PointingHandCursor }
+                            TapHandler {
+                                onTapped: {
+                                    root.activeConfigPlugin = modelData
+                                }
+                            }
+                        }
+
                         // Toggle Switch
                         Rectangle {
                             implicitWidth: 38
@@ -337,6 +381,10 @@ FocusScope {
                             TapHandler {
                                 onTapped: {
                                     PluginService.togglePlugin(modelData.id)
+                                    // If this plugin was currently open in settings, immediately close it
+                                    if (root.activeConfigPlugin && root.activeConfigPlugin.id === modelData.id) {
+                                        root.activeConfigPlugin = null
+                                    }
                                 }
                             }
                         }
@@ -393,6 +441,75 @@ FocusScope {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    // -----------------------------------------------------
+    // INLINE PLUGIN SETTINGS VIEW
+    // Rendered ONLY for an individual enabled plugin with settings
+    // Dynamically sized with scrollbar when content exceeds bounds
+    // -----------------------------------------------------
+    ColumnLayout {
+        id: settingsContainer
+        visible: root.activeConfigPlugin !== null && PluginService.isPluginEnabled(root.activeConfigPlugin.id)
+        anchors.fill: parent
+        anchors.margins: 16
+        spacing: 12
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+
+            Rectangle {
+                width: 28
+                height: 28
+                radius: 14
+                color: backGearHover.hovered ? Theme.buttonHover : Theme.surface
+                border.width: 1
+                border.color: Theme.border
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "󰁍"
+                    color: Theme.accent
+                    font.family: Theme.iconFont
+                    font.pixelSize: 14
+                }
+
+                HoverHandler { id: backGearHover; cursorShape: Qt.PointingHandCursor }
+                TapHandler { onTapped: root.activeConfigPlugin = null }
+            }
+
+            Text {
+                text: root.activeConfigPlugin ? (root.activeConfigPlugin.name || root.activeConfigPlugin.id) + " Settings" : "Plugin Settings"
+                color: Theme.textPrimary
+                font.pixelSize: 16
+                font.bold: true
+                Layout.fillWidth: true
+            }
+        }
+
+        Flickable {
+            id: settingsFlickable
+            Layout.fillWidth: true
+            Layout.preferredHeight: Math.min(500, pluginSettingsLoader.item ? pluginSettingsLoader.item.implicitHeight : 260)
+            contentWidth: width
+            contentHeight: pluginSettingsLoader.item ? pluginSettingsLoader.item.implicitHeight : 0
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+
+            ScrollBar.vertical: ScrollBar {
+                policy: settingsFlickable.contentHeight > settingsFlickable.height ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
+            }
+
+            Loader {
+                id: pluginSettingsLoader
+                width: settingsFlickable.width - (settingsFlickable.contentHeight > settingsFlickable.height ? 8 : 0)
+                active: root.activeConfigPlugin !== null && PluginService.isPluginEnabled(root.activeConfigPlugin.id)
+                source: (root.activeConfigPlugin && root.activeConfigPlugin.settings_entry && PluginService.isPluginEnabled(root.activeConfigPlugin.id))
+                    ? ("file://" + root.activeConfigPlugin.settings_entry)
+                    : ""
             }
         }
     }

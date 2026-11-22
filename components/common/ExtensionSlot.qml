@@ -17,6 +17,9 @@ ColumnLayout {
 
     spacing: 8
     visible: isReplaced || injections.length > 0 || defaultContainer.children.length > 0
+    Layout.fillWidth: visible
+    implicitHeight: visible ? (isReplaced ? (replacementLoader.item ? replacementLoader.item.implicitHeight : 0) : childrenRect.height) : 0
+    implicitWidth: visible ? childrenRect.width : 0
 
     // Full component replacement mode
     Loader {
@@ -38,13 +41,17 @@ ColumnLayout {
     }
 
     // Injected plugin components (appended or prepended)
+    // Strictly instantiated and visible ONLY when the owning plugin is enabled
     Repeater {
         model: root.isReplaced ? 0 : root.injections
         delegate: Loader {
             required property var modelData
-            visible: root.positionFilter === "all" || modelData.position === root.positionFilter
-            Layout.fillWidth: true
-            source: modelData.source
+            readonly property bool pluginActive: PluginService.isPluginEnabled(modelData.pluginId)
+
+            visible: pluginActive && (root.positionFilter === "all" || modelData.position === root.positionFilter)
+            active: pluginActive
+            Layout.fillWidth: visible
+            source: pluginActive ? modelData.source : ""
             asynchronous: true
         }
     }

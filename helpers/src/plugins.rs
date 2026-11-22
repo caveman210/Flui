@@ -1,6 +1,7 @@
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -9,6 +10,12 @@ pub struct PluginEntry {
     pub view: Option<String>,
     pub service: Option<String>,
     pub settings: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct PluginPanel {
+    pub view: Option<String>,
+    pub trigger: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -33,6 +40,8 @@ pub struct PluginManifest {
     pub extensions: Option<Vec<PluginExtension>>,
     pub hooks: Option<String>, // path to hooks.js
     pub theme: Option<String>, // path to theme.json
+    pub deps: Option<Vec<String>>, // system binaries/commands required
+    pub panel: Option<PluginPanel>,
     pub enabled: Option<bool>,
     #[serde(skip_deserializing)]
     pub dir: Option<String>,
@@ -50,6 +59,8 @@ pub struct PluginManifest {
     pub theme_path: Option<String>,
     #[serde(skip_deserializing)]
     pub is_valid: bool,
+    #[serde(skip_deserializing)]
+    pub missing_deps: Vec<String>,
 }
 
 pub fn run(dir_path: Option<String>) {
@@ -117,6 +128,18 @@ pub fn scan_plugins_dir(dir: &Path) -> Vec<PluginManifest> {
                                 }
                             }
 
+                            // Validate and resolve panel view if declared
+                            if let Some(ref panel) = item.panel {
+                                if let Some(ref v) = panel.view {
+                                    let full = p.join(v);
+                                    if full.exists() {
+                                        item.view_entry = Some(full.to_string_lossy().to_string());
+                                    } else {
+                                        valid = false;
+                                    }
+                                }
+                            }
+
                             // Validate and resolve extensions
                             if let Some(ref mut exts) = item.extensions {
                                 for ext in exts.iter_mut() {
@@ -140,6 +163,20 @@ pub fn scan_plugins_dir(dir: &Path) -> Vec<PluginManifest> {
                                 let t_full = p.join(t);
                                 if t_full.exists() {
                                     item.theme_path = Some(t_full.to_string_lossy().to_string());
+                                }
+                            }
+
+                            // Check for missing system dependencies
+                            if let Some(ref dep_list) = item.deps {
+                                for dep in dep_list {
+                                    let found = Command::new("sh")
+                                        .args(["-c", &format!("command -v {} > /dev/null 2>&1", dep)])
+                                        .status()
+                                        .map(|s| s.success())
+                                        .unwrap_or(false);
+                                    if !found {
+                                        item.missing_deps.push(dep.clone());
+                                    }
                                 }
                             }
 

@@ -15,7 +15,6 @@ import "../../services/shell"
 import "../../services/system"
 import "../../island"
 import "../../config"
-import "../../components/settings"
 
 // Compact Settings pane with edge placement, toggles, and manual weather config
 FocusScope {
@@ -301,7 +300,7 @@ FocusScope {
 
                         Text {
                             text: ConfigStore.nightLightSchedule
-                                ? (ConfigStore.nightLightStart + " - " + ConfigStore.nightLightEnd + " (" + ConfigStore.nightLightTransitionMins + "m ramp)")
+                                ? (ConfigStore.nightLightStart + " - " + ConfigStore.nightLightEnd)
                                 : "Disabled"
                             color: Theme.textMuted
                             font.pixelSize: 11

@@ -96,6 +96,9 @@ Item {
 
             case IslandState.pluginsMenuMode:
                 return pluginsMenuView
+
+            case IslandState.pluginViewMode:
+                return pluginDynamicView
             }
 
             return null
@@ -215,6 +218,14 @@ Item {
     Component {
         id: pluginsMenuView
         PluginsMenuView { }
+    }
+
+    Component {
+        id: pluginDynamicView
+        Loader {
+            source: IslandState.activePluginViewSource
+            focus: true
+        }
     }
 
     Component {

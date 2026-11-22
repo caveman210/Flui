@@ -23,6 +23,27 @@ Singleton {
         return map
     }
 
+    // Active background services declared by enabled plugins
+    readonly property var activeServiceEntries: {
+        var res = []
+        for (var i = 0; i < root.plugins.length; i++) {
+            var p = root.plugins[i]
+            if (p && p.id && root.isPluginEnabled(p.id) && p.service_entry && p.is_valid) {
+                res.push("file://" + p.service_entry)
+            }
+        }
+        return res
+    }
+
+    Repeater {
+        model: root.activeServiceEntries
+        delegate: Loader {
+            required property var modelData
+            source: modelData
+            active: true
+        }
+    }
+
     Connections {
         target: ConfigStore
         function onEnabledPluginsChanged() {
@@ -40,6 +61,18 @@ Singleton {
         if (idx >= 0) {
             current.splice(idx, 1)
         } else {
+            // Check missing deps before enabling
+            for (var i = 0; i < root.plugins.length; i++) {
+                var p = root.plugins[i]
+                if (p.id === id && p.missing_deps && p.missing_deps.length > 0) {
+                    console.warn("PluginService: enabling", id, "with missing deps:", p.missing_deps.join(", "))
+                    missingDepsNotif.pluginName = p.name || id
+                    missingDepsNotif.deps = p.missing_deps.join(", ")
+                    missingDepsNotif.running = false
+                    missingDepsNotif.running = true
+                    // Still enable — plugin may work partially or user chose to proceed
+                }
+            }
             current.push(id)
         }
         ConfigStore.enabledPlugins = current
@@ -62,6 +95,17 @@ Singleton {
         for (var i = 0; i < items.length; i++) {
             if (items[i].position === "replace") {
                 return items[i].source
+            }
+        }
+        return ""
+    }
+
+    // Returns file:// path to a plugin's panel view component
+    function getPluginViewSource(pluginId) {
+        for (var i = 0; i < root.plugins.length; i++) {
+            var p = root.plugins[i]
+            if (p && p.id === pluginId && root.isPluginEnabled(pluginId)) {
+                return p.view_entry ? ("file://" + p.view_entry) : ""
             }
         }
         return ""
@@ -143,6 +187,20 @@ Singleton {
                 }
             }
         }
+    }
+
+    // Notify when a plugin has missing system deps on enable
+    Process {
+        id: missingDepsNotif
+        property string pluginName: ""
+        property string deps: ""
+        command: [
+            "notify-send",
+            "--urgency=normal",
+            "--icon=dialog-warning",
+            "Plugin: " + pluginName,
+            "Missing system dependencies: " + deps
+        ]
     }
 
     function scan() {

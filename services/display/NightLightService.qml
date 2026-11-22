@@ -11,20 +11,15 @@ import "../../config"
 Singleton {
     id: root
 
-    // hyprsunset is Hyprland-only; niri gets gammastep via
-    // wlr-gamma-control, which must be installed separately.
     readonly property string backend: {
         if (CompositorService.isHyprland)
             return "hyprsunset"
-
         if (CompositorService.isNiri)
             return "gammastep"
-
         return ""
     }
 
-    readonly property string probeScript: "pgrep " + root.backend
-        + " >/dev/null && echo on || echo off"
+    readonly property string probeScript: "pgrep " + root.backend + " >/dev/null && echo on || echo off"
 
     readonly property string killScript: root.backend === "gammastep"
         ? "pkill -9 gammastep 2>/dev/null; " +
@@ -45,9 +40,7 @@ Singleton {
 
     property bool enabled: false
     property string subtitle: !available ? "N/A" : (enabled ? "On" : "Off")
-    property string icon: enabled
-        ? "󰔎"
-        : "󰃞"
+    property string icon: enabled ? "󰔎" : "󰃞"
 
     property int currentTemp: 6500
 
@@ -56,12 +49,8 @@ Singleton {
     property bool probing: false
     property bool acting: false
     property int retries: 0
-    property var lastScheduledTarget: null
 
-    // -------------------------------------------------------------
-    // Schedule Calculation (Binary State: On during night, Off during day)
-    // Avoids killing and re-spawning gammastep every few seconds.
-    // -------------------------------------------------------------
+    // Schedule: Simple start and end time check
     function isInSchedule(startStr, endStr) {
         var now = new Date()
         var curMin = now.getHours() * 60 + now.getMinutes()
@@ -78,7 +67,6 @@ Singleton {
         }
     }
 
-    // Schedule check timer (runs once a minute, no micro-stepping)
     Timer {
         id: scheduleTimer
         interval: 60000
@@ -86,10 +74,6 @@ Singleton {
         running: ConfigStore.nightLightSchedule && root.available
         triggeredOnStart: true
         onTriggered: root.checkSchedule()
-    }
-
-    function recheckSchedule() {
-        root.checkSchedule()
     }
 
     function checkSchedule() {
@@ -123,7 +107,6 @@ Singleton {
     Process {
         id: whichProcess
         command: ["bash", "-c", "command -v gammastep >/dev/null 2>&1"]
-
         onExited: (exitCode, exitStatus) => {
             root.gammastepInstalled = exitCode === 0
         }
@@ -132,7 +115,6 @@ Singleton {
     Process {
         id: stateProcess
         command: ["bash", "-c", root.probeScript]
-
         stdout: StdioCollector {
             onStreamFinished: {
                 root.probing = false
@@ -143,7 +125,6 @@ Singleton {
 
     Process {
         id: actProcess
-
         onExited: (exitCode, exitStatus) => {
             root.acting = false
             settleTimer.restart()
@@ -154,10 +135,7 @@ Singleton {
         id: settleTimer
         interval: 350
         repeat: false
-
-        onTriggered: {
-            root.reconcile()
-        }
+        onTriggered: root.reconcile()
     }
 
     function update() {

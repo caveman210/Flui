@@ -35,8 +35,16 @@ The bar and its dropdowns share flow-corner styling, visually joining panels to 
 - Wallpaper-derived color extraction and **Matugen** theming.
 - Theme selector and optional Hyprland theme synchronization.
 - Weather from Open-Meteo, wttr.in, MET Norway, or the aggregator option.
-- Night Light scheduling with configurable temperature, duration, and easing curve.
+- Night Light scheduling with configurable color temperature (3500K–5500K) and automatic operating hours.
 - Vim-inspired navigation in supported selectors and menus.
+
+### Extensibility & Plugins
+
+- **Zero-hotwiring architecture**: Core shell is permanently decoupled from external plugins.
+- **Plug-and-play plugins**: Hot-plug extensions into the status bar, Control Center, settings pane, calendar, and notification cards.
+- **Dedicated Plugins Manager**: Browse installed plugins, toggle them on/off, and configure individual plugin settings inline with dynamic resizing and scrollbars.
+- **Strict lifecycle & safety**: When disabled, plugins are 100% inert (zero views, zero bar items, zero background services, settings hidden).
+- **System dependency detection**: Missing binaries trigger advisory desktop notifications upon enabling.
 
 ## Requirements
 
@@ -163,7 +171,35 @@ awww-daemon
 - **Hyprland:** `hyprsunset`
 - **niri:** `gammastep`
 
-Install the matching utility. The Night Light control is unavailable when its backend is missing.
+Install the matching utility. Core Flui manages binary on/off scheduling and target color temperatures (3500K to 5500K). Advanced transition ramping and custom Bézier easing curves can be enabled via the optional `nightlight-curve` plugin.
+
+## Plugins
+
+Flui features a fully sandboxed, plug-and-play plugin system located at:
+
+```text
+~/.config/quickshell/plugins/
+├── gcal-sync/         # Google Calendar OAuth sync and live agenda
+└── nightlight-curve/  # Wayland gamma curve editor and Bézier progression
+```
+
+- Each plugin lives in its own folder with a `plugin.json` manifest.
+- Plugins declare slot extensions (`bar.tray`, `controlCenter.cards`, `calendar.events`), background services, and inline settings views.
+- Secrets, tokens, and cached files live in `~/.cache/quickshell/<plugin_id>/`.
+- Read [docs/PLUGIN_DIRECTIVE.md](docs/PLUGIN_DIRECTIVE.md) for the complete plugin authoring guide.
+
+## Rust Helper (`flui-helper`)
+
+High-performance native utilities are consolidated into a fast Rust binary (`helpers/`):
+
+- `flui-helper plugins`: Manifest discovery, path resolution, and dependency checking.
+- `flui-helper weather`: Multi-provider weather fetcher with offline cache fallback.
+- `flui-helper sysmon`: CPU, memory, and thermals sampler.
+- `flui-helper storage`: Mount point monitor and removable media ejector.
+- `flui-helper wallpapers`: Fast wallpaper directory indexer.
+- `flui-helper battery`: Power and battery statistics collector.
+
+See [docs/helper.md](docs/helper.md) for the command reference.
 
 ### Hyprland theme synchronization
 
@@ -196,6 +232,7 @@ Flui exposes an IPC target named `flui`:
 | `openBluetoothMenu` | Open Bluetooth menu |
 | `openMedia` | Open media controls |
 | `openNotifications` | Open notification history |
+| `openPluginsMenu` | Open plugins manager |
 | `cycleLayout` | Cycle Pill → Notch → Bar |
 | `focusToggle` | Toggle Focus |
 | `reset` | Return to the idle island |
@@ -233,15 +270,17 @@ The optional systemd user service starts Flui with `graphical-session.target`. R
 shell.qml       Quickshell entry point
 core/           Shared state, controllers, and status management
 island/         Island state, interaction, and view hosting
-services/       System data providers and compositor integrations
+services/       System data providers, compositor integrations, and PluginService
 windows/        Layer-shell windows and edge trigger
-views/          Pill, Notch, Bar, and panel interfaces
-components/     Reusable interface components
-styles/         Shared style constants and theme definitions
+views/          Pill, Notch, Bar, and panel interfaces (including PluginsMenuView)
+components/     Reusable interface components and ExtensionSlot
+plugins/        Hot-pluggable self-contained plugins
+helpers/        Rust helper binary (flui-helper) for fast background sampling
+styles/         Shared style constants and theme definitions (Theme.qml)
 config/         Settings store and compositor examples
-scripts/        System-integration helpers
+scripts/        Lightweight system scripts
 assets/         Icons and supporting assets
-docs/           Architecture notes and IPC reference
+docs/           Architecture notes, IPC reference, and Plugin Directive
 ```
 
 Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for module responsibilities and development conventions.

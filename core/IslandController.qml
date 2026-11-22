@@ -36,6 +36,17 @@ QtObject {
             IslandState.pluginsMenuMode
     }
 
+    function openPluginView(pluginId) {
+        var src = PluginService.getPluginViewSource(pluginId)
+        if (src && src.length > 0) {
+            IslandState.activePluginId = pluginId
+            IslandState.activePluginViewSource = src
+            IslandState.mode = IslandState.pluginViewMode
+        } else {
+            console.warn("IslandController: no panel view found for plugin", pluginId)
+        }
+    }
+
     function openControlCenter() {
         IslandState.mode =
             IslandState.controlCenterMode

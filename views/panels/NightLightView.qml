@@ -6,12 +6,12 @@ import "../../styles"
 import "../../services/display"
 import "../../island"
 import "../../config"
-import "../../components/settings"
+import "../../components/common"
 
-// Dedicated Night Light view (styled like WallpaperSelectorView & Settings subviews)
+// Clean Night Light settings: Schedule times & Temperature only (Curve removed to plugin)
 FocusScope {
     id: root
-    implicitWidth: 460
+    implicitWidth: 380
     implicitHeight: layout.implicitHeight + 36
     focus: true
 
@@ -30,7 +30,7 @@ FocusScope {
         anchors.margins: 18
         spacing: 14
 
-        // Top Navigation Header (Back button to Settings)
+        // Top Navigation Header
         RowLayout {
             Layout.fillWidth: true
             spacing: 10
@@ -50,7 +50,6 @@ FocusScope {
                     font.family: Theme.iconFont
                     font.pixelSize: 16
                 }
-
                 HoverHandler { id: backHover; cursorShape: Qt.PointingHandCursor }
                 TapHandler { onTapped: IslandController.openSettings() }
             }
@@ -58,18 +57,16 @@ FocusScope {
             Text {
                 text: "Night Light"
                 color: Theme.textPrimary
-                font.bold: true
                 font.pixelSize: 18
-                Layout.alignment: Qt.AlignVCenter
+                font.bold: true
+                Layout.fillWidth: true
             }
 
-            Item { Layout.fillWidth: true }
-
-            // Active State Indicator / Current temperature
+            // Quick Status Pill
             Rectangle {
-                height: 26
                 implicitWidth: statusRow.implicitWidth + 14
-                radius: 13
+                implicitHeight: 24
+                radius: 12
                 color: NightLightService.enabled ? Theme.accent : Theme.surface
                 border.width: 1
                 border.color: Theme.border
@@ -77,7 +74,7 @@ FocusScope {
                 RowLayout {
                     id: statusRow
                     anchors.centerIn: parent
-                    spacing: 5
+                    spacing: 4
 
                     Text {
                         text: NightLightService.enabled ? "󰔎" : "󰃞"
@@ -96,128 +93,224 @@ FocusScope {
             }
         }
 
-        // Schedule Configuration Card
+        // Target Color Temperature Section
         Rectangle {
             Layout.fillWidth: true
-            implicitHeight: schedCol.implicitHeight + 24
+            implicitHeight: tempLayout.implicitHeight + 24
             radius: 12
             color: Theme.surface
             border.width: 1
             border.color: Theme.border
 
             ColumnLayout {
-                id: schedCol
+                id: tempLayout
+                anchors.fill: parent
+                anchors.margins: 12
+                spacing: 10
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Text {
+                        text: "Target Temperature"
+                        color: Theme.textPrimary
+                        font.pixelSize: 13
+                        font.bold: true
+                    }
+                    Item { Layout.fillWidth: true }
+                    Text {
+                        text: ConfigStore.nightLightTargetTemp + "K"
+                        color: Theme.accent
+                        font.pixelSize: 13
+                        font.bold: true
+                    }
+                }
+
+                // Preset temperature chips
+                RowLayout {
+                    spacing: 6
+                    Layout.fillWidth: true
+
+                    Repeater {
+                        model: [
+                            { label: "3500K", val: 3500 },
+                            { label: "4000K", val: 4000 },
+                            { label: "4500K", val: 4500 },
+                            { label: "5000K", val: 5000 },
+                            { label: "5500K", val: 5500 }
+                        ]
+
+                        delegate: Rectangle {
+                            required property var modelData
+                            readonly property bool isSelected: ConfigStore.nightLightTargetTemp === modelData.val
+                            Layout.fillWidth: true
+                            implicitHeight: 26
+                            radius: 13
+                            color: isSelected ? Theme.accent : (pHover.hovered ? Theme.buttonHover : Theme.surfaceVariant)
+
+                            HoverHandler { id: pHover; cursorShape: Qt.PointingHandCursor }
+                            TapHandler {
+                                onTapped: {
+                                    ConfigStore.nightLightTargetTemp = modelData.val
+                                    ConfigStore.save()
+                                    NightLightService.checkSchedule()
+                                }
+                            }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: modelData.label
+                                color: isSelected ? Theme.background : Theme.textSecondary
+                                font.pixelSize: 10
+                                font.bold: isSelected
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Schedule Toggle Card
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: schedLayout.implicitHeight + 20
+            radius: 12
+            color: Theme.surface
+            border.width: 1
+            border.color: Theme.border
+
+            ColumnLayout {
+                id: schedLayout
                 anchors.fill: parent
                 anchors.margins: 12
                 spacing: 12
 
-                // Master Schedule Toggle
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 10
+                    spacing: 8
 
-                    Text { text: "󰔎"; font.family: Theme.iconFont; font.pixelSize: 16; color: Theme.accent }
+                    Text {
+                        text: "󰥔"
+                        font.family: Theme.iconFont
+                        font.pixelSize: 16
+                        color: Theme.accent
+                    }
 
                     Column {
                         Layout.fillWidth: true
                         spacing: 1
-                        Text { text: "Automatic Schedule"; color: Theme.textPrimary; font.pixelSize: 13; font.bold: true }
-                        Text { text: "Gradually shift color temperature at night"; color: Theme.textMuted; font.pixelSize: 10 }
+
+                        Text {
+                            text: "Automatic Schedule"
+                            color: Theme.textPrimary
+                            font.pixelSize: 13
+                            font.bold: true
+                        }
+
+                        Text {
+                            text: ConfigStore.nightLightSchedule ? "Runs daily at scheduled hours" : "Manual control only"
+                            color: Theme.textMuted
+                            font.pixelSize: 10
+                        }
                     }
 
                     Rectangle {
-                        width: 44
-                        height: 24
-                        radius: 12
+                        width: 38
+                        height: 20
+                        radius: 10
                         color: ConfigStore.nightLightSchedule ? Theme.accent : Theme.buttonBackground
+                        border.color: Theme.border
+                        border.width: 1
 
                         Rectangle {
+                            width: 14
+                            height: 14
+                            radius: 7
                             anchors.verticalCenter: parent.verticalCenter
                             x: ConfigStore.nightLightSchedule ? parent.width - width - 3 : 3
-                            width: 18
-                            height: 18
-                            radius: 9
                             color: ConfigStore.nightLightSchedule ? Theme.background : Theme.textPrimary
-                            Behavior on x { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+                            Behavior on x {
+                                NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                            }
                         }
+
                         HoverHandler { cursorShape: Qt.PointingHandCursor }
                         TapHandler {
                             onTapped: {
                                 ConfigStore.nightLightSchedule = !ConfigStore.nightLightSchedule
                                 ConfigStore.save()
-                                if (ConfigStore.nightLightSchedule)
-                                    NightLightService.checkSchedule()
+                                NightLightService.checkSchedule()
                             }
                         }
                     }
                 }
 
-                // Hours Picker Row
+                // Start & End Time Inputs
                 RowLayout {
                     Layout.fillWidth: true
+                    spacing: 12
                     visible: ConfigStore.nightLightSchedule
-                    spacing: 8
 
-                    Text {
-                        text: "Operating Window"
-                        color: Theme.textSecondary
-                        font.pixelSize: 12
+                    ColumnLayout {
                         Layout.fillWidth: true
-                    }
+                        spacing: 4
+                        Text {
+                            text: "Start (Evening)"
+                            color: Theme.textSecondary
+                            font.pixelSize: 10
+                        }
+                        Rectangle {
+                            Layout.fillWidth: true
+                            height: 32
+                            radius: 6
+                            color: Theme.surfaceVariant
+                            border.color: Theme.border
+                            border.width: 1
 
-                    Rectangle {
-                        width: 62
-                        height: 26
-                        radius: 6
-                        color: Theme.background
-                        border.width: 1
-                        border.color: Theme.border
-
-                        TextInput {
-                            id: startTimeInput
-                            anchors.fill: parent
-                            horizontalAlignment: TextInput.AlignHCenter
-                            verticalAlignment: TextInput.AlignVCenter
-                            text: ConfigStore.nightLightStart
-                            color: Theme.textPrimary
-                            font.pixelSize: 11
-                            font.bold: true
-                            selectByMouse: true
-                            onEditingFinished: {
-                                if (text.trim()) {
+                            TextInput {
+                                id: startInput
+                                anchors.fill: parent
+                                anchors.margins: 6
+                                text: ConfigStore.nightLightStart
+                                color: Theme.textPrimary
+                                font.pixelSize: 12
+                                horizontalAlignment: Text.AlignHCenter
+                                onEditingFinished: {
                                     ConfigStore.nightLightStart = text.trim()
                                     ConfigStore.save()
-                                    NightLightService.recheckSchedule()
+                                    NightLightService.checkSchedule()
                                 }
                             }
                         }
                     }
 
-                    Text { text: "to"; color: Theme.textMuted; font.pixelSize: 11 }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 4
+                        Text {
+                            text: "End (Morning)"
+                            color: Theme.textSecondary
+                            font.pixelSize: 10
+                        }
+                        Rectangle {
+                            Layout.fillWidth: true
+                            height: 32
+                            radius: 6
+                            color: Theme.surfaceVariant
+                            border.color: Theme.border
+                            border.width: 1
 
-                    Rectangle {
-                        width: 62
-                        height: 26
-                        radius: 6
-                        color: Theme.background
-                        border.width: 1
-                        border.color: Theme.border
-
-                        TextInput {
-                            id: endTimeInput
-                            anchors.fill: parent
-                            horizontalAlignment: TextInput.AlignHCenter
-                            verticalAlignment: TextInput.AlignVCenter
-                            text: ConfigStore.nightLightEnd
-                            color: Theme.textPrimary
-                            font.pixelSize: 11
-                            font.bold: true
-                            selectByMouse: true
-                            onEditingFinished: {
-                                if (text.trim()) {
+                            TextInput {
+                                id: endInput
+                                anchors.fill: parent
+                                anchors.margins: 6
+                                text: ConfigStore.nightLightEnd
+                                color: Theme.textPrimary
+                                font.pixelSize: 12
+                                horizontalAlignment: Text.AlignHCenter
+                                onEditingFinished: {
                                     ConfigStore.nightLightEnd = text.trim()
                                     ConfigStore.save()
-                                    NightLightService.recheckSchedule()
+                                    NightLightService.checkSchedule()
                                 }
                             }
                         }
@@ -226,10 +319,10 @@ FocusScope {
             }
         }
 
-        // Dedicated Interactive Curve Progression Section
-        CurveEditor {
+        // Extensibility Slot: Injected by plugins (e.g. nightlight-curve) when enabled
+        ExtensionSlot {
+            slotName: "nightlight.curve"
             Layout.fillWidth: true
-            visible: ConfigStore.nightLightSchedule
         }
     }
 }

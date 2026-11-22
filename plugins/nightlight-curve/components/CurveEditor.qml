@@ -1,9 +1,10 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
+import Quickshell.Io
 
-import "../../styles"
-import "../../config"
-import "../../services/display"
+import "../../../styles"
+import "../../../config"
 
 Rectangle {
     id: root
@@ -16,43 +17,88 @@ Rectangle {
     border.color: Theme.border
     clip: true
 
-    readonly property string activeCurve: ConfigStore.nightLightCurveType
-    readonly property int durationMins: ConfigStore.nightLightTransitionMins
+    property string activeCurve: "scurve"
+    property int durationMins: 15
+    property var controlPoints: [
+        {"x": 0.0, "y": 0.0},
+        {"x": 0.35, "y": 0.08},
+        {"x": 0.65, "y": 0.92},
+        {"x": 1.0, "y": 1.0}
+    ]
+
+    readonly property string cacheDir: Quickshell.env("HOME") + "/.cache/quickshell/nightlight-curve"
+    readonly property string cacheFile: cacheDir + "/curve.json"
+
+    function saveCurve() {
+        var data = {
+            "activeCurve": root.activeCurve,
+            "durationMins": root.durationMins,
+            "controlPoints": root.controlPoints
+        }
+        saveProc.command = [
+            "python3", "-c",
+            "import sys, os, json\nos.makedirs(sys.argv[1], exist_ok=True)\nwith open(sys.argv[2], 'w') as f: json.dump(json.loads(sys.argv[3]), f, indent=2)",
+            root.cacheDir,
+            root.cacheFile,
+            JSON.stringify(data)
+        ]
+        saveProc.running = false
+        saveProc.running = true
+    }
+
+    Process {
+        id: saveProc
+    }
+
+    function evaluateCurveProgress(t) {
+        if (root.activeCurve === "linear") return t
+        if (root.activeCurve === "ease_in") return t * t
+        if (root.activeCurve === "ease_out") return t * (2 - t)
+        if (root.activeCurve === "scurve") return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t
+
+        // Custom cubic Bézier from controlPoints
+        if (root.controlPoints && root.controlPoints.length === 4) {
+            var p0 = root.controlPoints[0], p1 = root.controlPoints[1]
+            var p2 = root.controlPoints[2], p3 = root.controlPoints[3]
+            var u = 1 - t
+            return (u*u*u * p0.y) + (3*u*u*t * p1.y) + (3*u*t*t * p2.y) + (t*t*t * p3.y)
+        }
+        return t
+    }
 
     function applyPreset(name) {
-        ConfigStore.nightLightCurveType = name
+        root.activeCurve = name
         if (name === "scurve") {
-            ConfigStore.nightLightControlPoints = [
+            root.controlPoints = [
                 {"x": 0.0, "y": 0.0},
                 {"x": 0.35, "y": 0.08},
                 {"x": 0.65, "y": 0.92},
                 {"x": 1.0, "y": 1.0}
             ]
         } else if (name === "linear") {
-            ConfigStore.nightLightControlPoints = [
+            root.controlPoints = [
                 {"x": 0.0, "y": 0.0},
                 {"x": 0.33, "y": 0.33},
                 {"x": 0.66, "y": 0.66},
                 {"x": 1.0, "y": 1.0}
             ]
         } else if (name === "ease_in") {
-            ConfigStore.nightLightControlPoints = [
+            root.controlPoints = [
                 {"x": 0.0, "y": 0.0},
                 {"x": 0.40, "y": 0.10},
                 {"x": 0.80, "y": 0.45},
                 {"x": 1.0, "y": 1.0}
             ]
         } else if (name === "ease_out") {
-            ConfigStore.nightLightControlPoints = [
+            root.controlPoints = [
                 {"x": 0.0, "y": 0.0},
                 {"x": 0.20, "y": 0.55},
                 {"x": 0.60, "y": 0.90},
                 {"x": 1.0, "y": 1.0}
             ]
         }
-        ConfigStore.save()
+        saveCurve()
         canvas.requestPaint()
-        NightLightService.recheckSchedule()
     }
 
     ColumnLayout {
@@ -97,22 +143,22 @@ Rectangle {
                         Text {
                             id: presetText
                             anchors.centerIn: parent
-                            text: parent.modelData.label
-                            color: root.activeCurve === parent.modelData.id ? Theme.background : Theme.textPrimary
+                            text: modelData.label
+                            color: root.activeCurve === modelData.id ? Theme.background : Theme.textPrimary
                             font.pixelSize: 10
-                            font.bold: root.activeCurve === parent.modelData.id
+                            font.bold: root.activeCurve === modelData.id
                         }
 
                         HoverHandler { cursorShape: Qt.PointingHandCursor }
                         TapHandler {
-                            onTapped: root.applyPreset(parent.modelData.id)
+                            onTapped: root.applyPreset(modelData.id)
                         }
                     }
                 }
             }
         }
 
-        // Graph Area (Fully contained and padded)
+        // Graph Area
         Item {
             id: graphArea
             Layout.fillWidth: true
@@ -127,7 +173,6 @@ Rectangle {
             readonly property real plotW: Math.max(10, width - padLeft - padRight)
             readonly property real plotH: Math.max(10, height - padTop - padBottom)
 
-            // Canvas strictly within bounded coordinate system
             Canvas {
                 id: canvas
                 anchors.fill: parent
@@ -177,7 +222,7 @@ Rectangle {
                     var steps = 80
                     for (var s = 0; s <= steps; s++) {
                         var t = s / steps
-                        var v = NightLightService.evaluateCurveProgress(t)
+                        var v = root.evaluateCurveProgress(t)
                         var cx = ox + t * pw
                         var cy = oy + (1.0 - v) * ph
                         if (s === 0) ctx.moveTo(cx, cy)
@@ -189,14 +234,8 @@ Rectangle {
                     ctx.lineTo(ox + pw, oy + ph)
                     ctx.lineTo(ox, oy + ph)
                     ctx.closePath()
-                    ctx.fillStyle = "#E5E7EB12"
+                    ctx.fillStyle = Theme.borderSubtle
                     ctx.fill()
-                }
-
-                Connections {
-                    target: ConfigStore
-                    function onNightLightCurveTypeChanged() { canvas.requestPaint() }
-                    function onNightLightControlPointsChanged() { canvas.requestPaint() }
                 }
             }
 
@@ -236,14 +275,14 @@ Rectangle {
             // Interactive Draggable Nodes
             Repeater {
                 id: handleRepeater
-                model: ConfigStore.nightLightControlPoints ? ConfigStore.nightLightControlPoints.length : 0
+                model: root.controlPoints ? root.controlPoints.length : 0
 
                 Item {
                     id: pointHandle
                     required property int index
 
-                    readonly property var ptData: (ConfigStore.nightLightControlPoints && index < ConfigStore.nightLightControlPoints.length)
-                        ? ConfigStore.nightLightControlPoints[index]
+                    readonly property var ptData: (root.controlPoints && index < root.controlPoints.length)
+                        ? root.controlPoints[index]
                         : ({"x": 0, "y": 0})
 
                     x: graphArea.padLeft + (ptData.x * graphArea.plotW) - width / 2
@@ -258,9 +297,10 @@ Rectangle {
                         height: width
                         radius: width / 2
                         color: mouseHandle.drag.active ? Theme.textPrimary : Theme.accent
-                        border.width: 2
-                        border.color: Theme.background
-                        Behavior on width { NumberAnimation { duration: 80 } }
+                        border.width: 1
+                        border.color: Theme.border
+
+                        Behavior on width { NumberAnimation { duration: 100 } }
                     }
 
                     MouseArea {
@@ -280,7 +320,7 @@ Rectangle {
                                 var relX = Math.max(0.0, Math.min(1.0, (parent.x + parent.width / 2 - graphArea.padLeft) / graphArea.plotW))
                                 var relY = Math.max(0.0, Math.min(1.0, 1.0 - (parent.y + parent.height / 2 - graphArea.padTop) / graphArea.plotH))
 
-                                var points = JSON.parse(JSON.stringify(ConfigStore.nightLightControlPoints))
+                                var points = JSON.parse(JSON.stringify(root.controlPoints))
                                 points[pointHandle.index] = {
                                     "x": Math.round(relX * 100) / 100,
                                     "y": Math.round(relY * 100) / 100
@@ -289,11 +329,10 @@ Rectangle {
                                 if (pointHandle.index === 0) points[0].x = 0.0
                                 if (pointHandle.index === points.length - 1) points[points.length - 1].x = 1.0
 
-                                ConfigStore.nightLightControlPoints = points
-                                ConfigStore.nightLightCurveType = "custom"
-                                ConfigStore.save()
+                                root.controlPoints = points
+                                root.activeCurve = "custom"
+                                root.saveCurve()
                                 canvas.requestPaint()
-                                NightLightService.recheckSchedule()
                             }
                         }
                     }
@@ -330,18 +369,17 @@ Rectangle {
                 HoverHandler { cursorShape: Qt.PointingHandCursor }
                 TapHandler {
                     onTapped: {
-                        if (ConfigStore.nightLightTransitionMins > 1) {
-                            ConfigStore.nightLightTransitionMins = Math.max(1, ConfigStore.nightLightTransitionMins - 5)
-                            ConfigStore.save()
+                        if (root.durationMins > 1) {
+                            root.durationMins = Math.max(1, root.durationMins - 5)
+                            root.saveCurve()
                             canvas.requestPaint()
-                            NightLightService.recheckSchedule()
                         }
                     }
                 }
             }
 
             Text {
-                text: ConfigStore.nightLightTransitionMins + "m"
+                text: root.durationMins + "m"
                 color: Theme.textPrimary
                 font.bold: true
                 font.pixelSize: 11
@@ -365,11 +403,10 @@ Rectangle {
                 HoverHandler { cursorShape: Qt.PointingHandCursor }
                 TapHandler {
                     onTapped: {
-                        if (ConfigStore.nightLightTransitionMins < 120) {
-                            ConfigStore.nightLightTransitionMins = Math.min(120, ConfigStore.nightLightTransitionMins + 5)
-                            ConfigStore.save()
+                        if (root.durationMins < 120) {
+                            root.durationMins = Math.min(120, root.durationMins + 5)
+                            root.saveCurve()
                             canvas.requestPaint()
-                            NightLightService.recheckSchedule()
                         }
                     }
                 }
@@ -390,7 +427,7 @@ Rectangle {
                     anchors.centerIn: parent
                     spacing: 4
                     Text { text: "󰔎"; font.family: Theme.iconFont; font.pixelSize: 11; color: Theme.accent }
-                    Text { text: ConfigStore.nightLightTargetTemp + "K"; color: Theme.textPrimary; font.pixelSize: 10; font.bold: true }
+                    Text { text: (ConfigStore.nightLightTargetTemp || 4500) + "K"; color: Theme.textPrimary; font.pixelSize: 10; font.bold: true }
                 }
             }
         }

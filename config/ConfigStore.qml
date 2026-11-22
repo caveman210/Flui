@@ -31,14 +31,6 @@ Singleton {
     property bool nightLightSchedule: true
     property string nightLightStart: "20:00"
     property string nightLightEnd: "07:00"
-    property int nightLightTransitionMins: 15
-    property string nightLightCurveType: "scurve" // "scurve", "linear", "ease_in", "ease_out", "custom"
-    property var nightLightControlPoints: [
-        {"x": 0.0, "y": 0.0},
-        {"x": 0.35, "y": 0.08},
-        {"x": 0.65, "y": 0.92},
-        {"x": 1.0, "y": 1.0}
-    ]
     property int nightLightTargetTemp: 4500
 
     // Wallpaper & Shuffle Settings
@@ -83,9 +75,6 @@ Singleton {
             "nightLightSchedule": root.nightLightSchedule,
             "nightLightStart": root.nightLightStart,
             "nightLightEnd": root.nightLightEnd,
-            "nightLightTransitionMins": root.nightLightTransitionMins,
-            "nightLightCurveType": root.nightLightCurveType,
-            "nightLightControlPoints": root.nightLightControlPoints,
             "nightLightTargetTemp": root.nightLightTargetTemp,
             "wallpaperShuffle": root.wallpaperShuffle,
             "wallpaperShuffleInterval": root.wallpaperShuffleInterval,
@@ -130,9 +119,6 @@ Singleton {
         if (json.nightLightSchedule !== undefined) root.nightLightSchedule = json.nightLightSchedule
         if (json.nightLightStart !== undefined) root.nightLightStart = json.nightLightStart
         if (json.nightLightEnd !== undefined) root.nightLightEnd = json.nightLightEnd
-        if (json.nightLightTransitionMins !== undefined) root.nightLightTransitionMins = json.nightLightTransitionMins
-        if (json.nightLightCurveType !== undefined) root.nightLightCurveType = json.nightLightCurveType
-        if (json.nightLightControlPoints !== undefined) root.nightLightControlPoints = json.nightLightControlPoints
         if (json.nightLightTargetTemp !== undefined) root.nightLightTargetTemp = json.nightLightTargetTemp
 
         if (json.wallpaperShuffle !== undefined) root.wallpaperShuffle = json.wallpaperShuffle
