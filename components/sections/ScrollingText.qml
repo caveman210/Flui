@@ -8,7 +8,8 @@ Item {
     property int maxWidth: 100
     property int fontSize: 13
     property bool hovered: false
-    width: maxWidth
+    width: Math.min(maxWidth, label.implicitWidth)
+    implicitWidth: width
     implicitHeight: label.implicitHeight
     clip: true
 

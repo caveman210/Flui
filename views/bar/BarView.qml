@@ -19,83 +19,96 @@ Item {
 
     implicitHeight: Theme.barHeight
 
-    readonly property real weatherCenterX: mediaSection.x + mediaSection.width / 2
+    readonly property real weatherCenterX: leftArea.x + infoSlotContainer.x + infoSlotContainer.width / 2
 
-    // Bar's left cluster: Notification bell only
+    // Bar's left area: Notification bell, Plugin system (bar.info), and Media player
     RowLayout {
-        id: leftCluster
+        id: leftArea
         anchors.left: parent.left
         anchors.leftMargin: 20
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 12
+        spacing: 16
 
         NotificationBell {
             Layout.alignment: Qt.AlignVCenter
         }
-    }
 
-    // Media Line OR Extensibility Info Slot (Weather, Motivation, etc.)
-    Item {
-        id: mediaSection
-        anchors.left: leftCluster.right
-        anchors.leftMargin: 16
-        anchors.verticalCenter: parent.verticalCenter
-        implicitWidth: MediaService.hasPlayer
-            ? mediaRow.implicitWidth
-            : infoSlot.implicitWidth
-        implicitHeight: Theme.barHeight
+        // Extensibility Slot: bar.info (Weather, Quote, etc.) - ALWAYS visible in bar
+        Item {
+            id: infoSlotContainer
+            Layout.alignment: Qt.AlignVCenter
+            implicitWidth: infoSlot.implicitWidth
+            implicitHeight: infoSlot.implicitHeight
+            width: implicitWidth
+            height: implicitHeight
 
-        // Priority 1: When media is playing, show track
+            SpaceHarness {
+                id: barHarness
+                totalWidth: 320
+                isBar: true
+            }
+
+            ExtensionSlot {
+                id: infoSlot
+                slotName: "bar.info"
+                orientation: "horizontal"
+                cycle: true
+                spaceHarness: barHarness
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.left: parent.left
+            }
+
+            HoverHandler {
+                cursorShape: Qt.PointingHandCursor
+            }
+
+            TapHandler {
+                acceptedButtons: Qt.LeftButton
+                gesturePolicy: TapHandler.ReleaseWithinBounds
+                onTapped: function(event) {
+                    event.accepted = true
+                    if (infoSlot.currentPluginId === "quote") {
+                        IslandController.openQuote()
+                    } else {
+                        IslandController.openWeather()
+                    }
+                }
+            }
+        }
+
+        // Media Line: shown alongside when media is active
         RowLayout {
             id: mediaRow
             visible: MediaService.hasPlayer
-            anchors.verticalCenter: parent.verticalCenter
+            Layout.alignment: Qt.AlignVCenter
             spacing: 8
 
             Text {
                 text: "♪"
-                color: Theme.textPrimary
-                font.pixelSize: 16
+                color: Theme.accent
+                font.pixelSize: 15
                 Layout.alignment: Qt.AlignVCenter
             }
 
             ScrollingText {
                 text: MediaService.title || "No Title"
-                maxWidth: 240
-                fontSize: 13
+                maxWidth: 200
+                fontSize: 12
                 hovered: mediaHover.hovered
                 Layout.alignment: Qt.AlignVCenter
             }
-        }
 
-        // Extensibility Slot: bar.info (Weather, Quote, etc.)
-        ExtensionSlot {
-            id: infoSlot
-            slotName: "bar.info"
-            orientation: "horizontal"
-            cycle: true
-            visible: !MediaService.hasPlayer
-            anchors.verticalCenter: parent.verticalCenter
-        }
+            HoverHandler {
+                id: mediaHover
+                cursorShape: Qt.PointingHandCursor
+            }
 
-        HoverHandler {
-            id: mediaHover
-            cursorShape: Qt.PointingHandCursor
-        }
-
-        TapHandler {
-            acceptedButtons: Qt.LeftButton
-            gesturePolicy: TapHandler.ReleaseWithinBounds
-
-            onTapped: function(event) {
-                event.accepted = true
-
-                if (MediaService.hasPlayer) {
+            TapHandler {
+                acceptedButtons: Qt.LeftButton
+                gesturePolicy: TapHandler.ReleaseWithinBounds
+                onTapped: function(event) {
+                    event.accepted = true
                     IslandController.openMediaFromLeftSection()
-                } else if (infoSlot.currentPluginId === "quote") {
-                    IslandController.openQuote()
-                } else {
-                    IslandController.openWeather()
                 }
             }
         }

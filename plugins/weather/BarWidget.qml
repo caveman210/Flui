@@ -2,20 +2,32 @@ import QtQuick
 import QtQuick.Layouts
 import "../../styles"
 import "../../config"
+import "../../services"
 import "."
 
 Item {
     id: root
 
-    readonly property bool isBar: ConfigStore.layout === 2
+    property var slotHarness: null
+    property real availableWidth: slotHarness ? slotHarness.availableWidth : -1
+
+    readonly property bool isBar: ConfigStore.layout === 2 || (slotHarness && slotHarness.isBar)
+
+    // Privacy indicators count for notch/pill collision avoidance (bar layout is completely unaffected)
+    readonly property int privacyCount: slotHarness ? slotHarness.privacyCount : (!isBar
+        ? ((PrivacyService.micActive ? 1 : 0) + (PrivacyService.cameraActive ? 1 : 0) + (PrivacyService.screenSharingActive ? 1 : 0))
+        : 0)
 
     implicitHeight: isBar ? 28 : 33
     implicitWidth: isBar ? barRow.implicitWidth : notchRow.implicitWidth
+    width: implicitWidth
+    height: implicitHeight
 
     // BAR LAYOUT: Single row (15px icon, 12px bold temp + full city name)
     RowLayout {
         id: barRow
         visible: root.isBar
+        anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         spacing: 7
 
@@ -38,7 +50,7 @@ Item {
         }
     }
 
-    // PILL / NOTCH LAYOUT: Double row (18px icon, 13px bold temp, 11px city, no truncation unless true overflow)
+    // PILL / NOTCH LAYOUT: Two-line stacked (18px icon, 14px bold temp, 11px lighter city)
     RowLayout {
         id: notchRow
         visible: !root.isBar
@@ -54,26 +66,29 @@ Item {
         }
 
         Column {
-            spacing: 2
+            id: notchCol
+            spacing: 1
             Layout.alignment: Qt.AlignVCenter
 
+            // Top: Degrees in larger bold text
             Text {
+                id: tempText
                 text: WeatherService.temp
                 color: Theme.textPrimary
-                font.pixelSize: 13
+                font.pixelSize: 14
                 font.bold: true
             }
 
+            // Bottom: City in lighter smaller text
             Text {
+                id: cityText
                 visible: WeatherService.city !== ""
                 text: WeatherService.city
-                color: Theme.textPrimary
-                opacity: 0.7
+                color: Theme.textSecondary
                 font.pixelSize: 11
                 elide: Text.ElideRight
-                width: Math.min(implicitWidth, 240)
+                width: root.availableWidth > 0 ? Math.min(implicitWidth, Math.max(30, root.availableWidth - 26)) : implicitWidth
             }
         }
     }
-
 }

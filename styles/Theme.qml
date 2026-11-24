@@ -144,7 +144,7 @@ QtObject {
     // Ensures plugins and shell always share the exact same palette
     // =========================================================
 
-    readonly property string _matugenPath: (Quickshell.env("XDG_CONFIG_HOME") !== ""
+    readonly property string _matugenPath: (Quickshell.env("XDG_CONFIG_HOME")
         ? Quickshell.env("XDG_CONFIG_HOME") + "/quickshell"
         : Quickshell.env("HOME") + "/.config/quickshell") + "/styles/themes/matugen/Theme.qml"
 

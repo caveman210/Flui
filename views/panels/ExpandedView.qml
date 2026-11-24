@@ -10,8 +10,8 @@ Item {
     id: root
 
     readonly property int totalWidth: 560
-    readonly property int sideWidth: 172
-    readonly property int gutter: 28
+    readonly property int sideWidth: 212
+    readonly property int gutter: 20
     readonly property bool hasMedia: MediaService.hasPlayer
 
     implicitWidth: totalWidth
@@ -21,7 +21,7 @@ Item {
         anchors.fill: parent
         anchors.leftMargin: 14
         anchors.rightMargin: 14
-        spacing: 0
+        spacing: 5
 
         // Left Section: Media info when playing, otherwise standard LeftSection
         Item {
@@ -32,8 +32,8 @@ Item {
             LeftSection {
                 visible: !root.hasMedia
                 anchors.left: parent.left
+                anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                width: root.sideWidth
             }
 
             // When media is playing: Cava on left, Song Title & Artist on right (no thumbnail, clean padding)
@@ -57,14 +57,14 @@ Item {
 
                     ScrollingText {
                         text: MediaService.title || "No Title"
-                        maxWidth: 125
+                        maxWidth: 160
                         fontSize: 13
                         hovered: mediaHover.hovered
                     }
 
                     ScrollingText {
                         text: MediaService.artist || "Unknown Artist"
-                        maxWidth: 125
+                        maxWidth: 160
                         fontSize: 11
                         hovered: mediaHover.hovered
                         opacity: 0.7
@@ -87,7 +87,7 @@ Item {
 
         // Center Section: Clock and Calendar Date
         Item {
-            Layout.preferredWidth: root.totalWidth - root.sideWidth * 2 - root.gutter
+            Layout.fillWidth: true
             Layout.fillHeight: true
 
             CenterSection {

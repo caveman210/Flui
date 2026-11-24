@@ -2,6 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import "../island"
 
 Singleton {
     id: root
@@ -15,6 +16,24 @@ Singleton {
     property int statusWidth: 0
     property int statusHeight: 33
 
+    readonly property bool suppressOsd: !IslandState.layoutIsBar && (IslandState.mode === IslandState.expandedMode || IslandState.islandHovered)
+
+    Connections {
+        target: IslandState
+        function onModeChanged() {
+            if (root.suppressOsd) {
+                root.visible = false
+                hideTimer.stop()
+            }
+        }
+        function onIslandHoveredChanged() {
+            if (root.suppressOsd) {
+                root.visible = false
+                hideTimer.stop()
+            }
+        }
+    }
+
     function show(data) {
         mode = data.mode
         icon = data.icon
@@ -23,6 +42,11 @@ Singleton {
 
         statusWidth = data.statusWidth ?? 0
         statusHeight = data.statusHeight ?? 33
+
+        if (root.suppressOsd) {
+            root.visible = false
+            return
+        }
 
         visible = true
 
@@ -35,6 +59,9 @@ Singleton {
     property var _queue: []
 
     function showQueued(data) {
+        if (root.suppressOsd && data.mode === "notification")
+            return
+
         // Bound the queue so a flapping adapter can't grow it forever.
         if (_queue.length >= 10)
             _queue.shift()
@@ -69,6 +96,9 @@ Singleton {
             return
 
         if (_queue.length === 0)
+            return
+
+        if (root.suppressOsd)
             return
 
         var next = _queue.shift()

@@ -7,7 +7,7 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    readonly property string configDir: Quickshell.env("XDG_CONFIG_HOME") !== ""
+    readonly property string configDir: Quickshell.env("XDG_CONFIG_HOME")
         ? (Quickshell.env("XDG_CONFIG_HOME") + "/quickshell")
         : (Quickshell.env("HOME") + "/.config/quickshell")
     readonly property string configPath: configDir + "/settings.json"

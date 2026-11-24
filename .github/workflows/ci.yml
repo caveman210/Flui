@@ -125,6 +125,12 @@ jobs:
                   for ext in p['extensions']:
                       assert ext.get('slot'), f'Extension in {pid} missing slot'
                       assert os.path.isfile(ext['resolved_source']), f'Missing extension source in {pid}: {ext[\"resolved_source\"]}'
+                      # Check space-adaptive contract for bar widgets (privacy contention conditional)
+                      if ext.get('slot') == 'bar.info' and 'BarWidget.qml' in ext.get('source', ''):
+                          with open(ext['resolved_source'], 'r', encoding='utf-8') as bfp:
+                              bw_content = bfp.read()
+                              assert 'privacyCount' in bw_content or 'PrivacyService' in bw_content, \
+                                  f"BarWidget in {pid} must implement space-adaptation conditional for privacy contention"
 
           # 2. Table list
           print('==> Testing flui-helper plugins list...')

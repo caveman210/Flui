@@ -36,7 +36,7 @@ QtObject {
     property color danger: "#ffb4ab"
     property color dangerHover: "#93000a"
     property color warning: "#afc9e7"
-    property color success: "#b0ccc8"
+    property color success: "#81d5cc"
 
     property color sliderBackground: "#3f4947"
     property color sliderFill: "#81d5cc"

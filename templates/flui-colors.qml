@@ -38,7 +38,7 @@ QtObject {
     property color danger: "{{colors.error.default.hex}}"
     property color dangerHover: "{{colors.error_container.default.hex}}"
     property color warning: "{{colors.tertiary.default.hex}}"
-    property color success: "{{colors.secondary.default.hex}}"
+    property color success: "{{colors.primary.default.hex}}"
 
     property color sliderBackground: "{{colors.surface_variant.default.hex}}"
     property color sliderFill: "{{colors.primary.default.hex}}"

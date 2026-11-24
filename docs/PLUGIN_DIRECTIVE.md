@@ -133,7 +133,27 @@ These are the named `ExtensionSlot` injection points that exist in core. A plugi
 |------|---------|
 | `notifications.actions` | Extra action buttons on notification cards |
 
-> **Replace mode** (`"position": "replace"`) completely swaps the slot's native content. Use only when the plugin fully owns the feature (e.g. `nightlight-curve` replacing the schedule view with a curve editor). Only one plugin may replace a given slot at a time — first registered wins.
+### Slot Harness & Dynamic Space Adaptation
+
+When an `ExtensionSlot` renders widgets in space-constrained positions (such as `bar.info` in the left section beside the `PrivacyCluster`), it passes a `slotHarness` context object and reactive geometry properties directly to the injected component:
+
+| Property | Type | Description |
+|---|---|---|
+| `slotHarness.availableWidth` | `real` | Pixels remaining after accounting for notifications and privacy icons. |
+| `slotHarness.remainingWidth` | `real` | Alias of `availableWidth`. |
+| `slotHarness.privacyCount` | `int` | Number of active privacy streams (0, 1, 2, 3). |
+| `slotHarness.privacyActive` | `bool` | Whether any privacy stream is capturing. |
+| `slotHarness.isBar` | `bool` | `true` if hosted in the bar layout (where privacy is detached/uncontended). |
+| `slotHarness.compact` | `bool` | Convenience flag: `true` when space is tight or privacy is active. |
+| `slotHarness.iconOnly` | `bool` | Convenience flag: `true` when space only permits an icon (`< 45px`). |
+
+Plugins can optionally declare:
+```qml
+property var slotHarness: null
+property real availableWidth: slotHarness ? slotHarness.availableWidth : -1
+property int privacyCount: slotHarness ? slotHarness.privacyCount : 0
+```
+This enables the plugin to dynamically morph its content (e.g., resizing `ScrollingText.maxWidth`, hiding labels, or collapsing to an icon) while `ExtensionSlot` guarantees the slot's bounds will never overflow or collide with adjacent UI.
 
 ---
 

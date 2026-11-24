@@ -7,6 +7,7 @@ import Quickshell.Services.Notifications
 
 import "../../core"
 import "../../config"
+import "../../island"
 import ".."
 import "../notification/NotifUtils.js" as NotifUtils
 import "../notification"
@@ -223,6 +224,12 @@ Singleton {
     function osdToast(title) {
         if (root.dnd || FocusService.enabled) {
             root.missedWhileFocus++
+            return
+        }
+
+        // When holding the expanded pill / expanded notch, do not show OSD over the expandedview.
+        // Instead, just push to notifcenter (already stored in NotificationStore).
+        if (!IslandState.layoutIsBar && (IslandState.mode === IslandState.expandedMode || IslandState.islandHovered)) {
             return
         }
 

@@ -32,10 +32,10 @@ Item {
     property string hovered: ""
 
     // 16px glyph needs ~22px slot width so icons breathe instead
-    // of colliding, plus padding inside the pill capsule.
+    // of colliding, with tuned spacing to stay within 90-100px for 3 icons.
     readonly property real slotWidth: 22
-    readonly property real itemSpacing: 10
-    readonly property real horizontalPadding: 12
+    readonly property real itemSpacing: 6
+    readonly property real horizontalPadding: 8
 
     // Count how many icons are active to calculate proper width and spacing
     readonly property int activeCount: (micLive ? 1 : 0) + (cameraLive ? 1 : 0) + (castLive ? 1 : 0)
