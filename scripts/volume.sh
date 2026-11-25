@@ -13,6 +13,18 @@ case "$STEP" in
     mute)
         wpctl set-mute "$SINK" toggle
         ;;
+    mic-mute)
+        wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
+        MIC_INFO=$(wpctl get-volume @DEFAULT_AUDIO_SOURCE@)
+        CACHE_DIR="$HOME/.cache/quickshell/status"
+        mkdir -p "$CACHE_DIR"
+        if echo "$MIC_INFO" | grep -q MUTED; then
+            printf "microphone|1\n" > "$CACHE_DIR/event"
+        else
+            printf "microphone|0\n" > "$CACHE_DIR/event"
+        fi
+        exit 0
+        ;;
 esac
 
 VOLUME_INFO=$(wpctl get-volume "$SINK")

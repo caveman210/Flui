@@ -19,15 +19,16 @@ rustPlatform.buildRustPackage {
 
   src = lib.cleanSourceWith {
     src = ./.;
-    filter = path: type:
+    filter =
+      path: type:
       let
         base = baseNameOf path;
       in
-        !(lib.hasPrefix "." base && base != ".config")
-        && base != "flake.nix"
-        && base != "flake.lock"
-        && base != "package.nix"
-        && base != "result";
+      !(lib.hasPrefix "." base && base != ".config")
+      && base != "flake.nix"
+      && base != "flake.lock"
+      && base != "package.nix"
+      && base != "result";
   };
 
   sourceRoot = "source/helpers";
@@ -80,17 +81,19 @@ rustPlatform.buildRustPackage {
     chmod +x "$out/bin/flui"
 
     wrapProgram "$out/bin/flui" \
-      --prefix PATH : ${lib.makeBinPath [
-        quickshell
-        awww
-        matugen
-        imagemagick
-        cava
-        bash
-        coreutils
-        findutils
-        gnugrep
-      ]}:"$out/bin"
+      --prefix PATH : ${
+        lib.makeBinPath [
+          quickshell
+          awww
+          matugen
+          imagemagick
+          cava
+          bash
+          coreutils
+          findutils
+          gnugrep
+        ]
+      }:"$out/bin"
   '';
 
   meta = with lib; {

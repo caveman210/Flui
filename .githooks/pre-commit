@@ -11,6 +11,16 @@ if command -v rustfmt >/dev/null 2>&1; then
     fi
 fi
 
+# Format staged Nix files with nix fmt
+if command -v nix >/dev/null 2>&1; then
+    staged_nix=$(git diff --cached --name-only --diff-filter=ACM | grep '\.nix$' || true)
+    if [ -n "$staged_nix" ]; then
+        echo "==> Formatting staged Nix files with nix fmt..."
+        echo "$staged_nix" | xargs nix fmt --
+        echo "$staged_nix" | xargs git add
+    fi
+fi
+
 # Format staged JSON, YAML with Prettier
 staged_prettier=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(json|yml|yaml)$' || true)
 if [ -n "$staged_prettier" ]; then

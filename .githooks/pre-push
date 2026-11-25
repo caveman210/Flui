@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -e
+
+# Verify formatting before pushing upstream
+if command -v nix >/dev/null 2>&1; then
+    echo "==> Verifying Nix files with nix fmt before sending upstream..."
+    nix fmt -- --fail-on-change || {
+        echo "ERROR: Unformatted Nix files detected. Run 'nix fmt' and commit changes before pushing upstream."
+        exit 1
+    }
+fi

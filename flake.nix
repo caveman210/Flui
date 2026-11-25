@@ -5,10 +5,15 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
 
-  outputs = { self, nixpkgs }:
+  outputs =
+    { self, nixpkgs }:
     let
-      supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
-      forAllSystems = f: nixpkgs.lib.genAttrs supportedSystems (system: f (import nixpkgs { inherit system; }));
+      supportedSystems = [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
+      forAllSystems =
+        f: nixpkgs.lib.genAttrs supportedSystems (system: f (import nixpkgs { inherit system; }));
     in
     {
       # Standard Nixpkgs Overlay
@@ -22,8 +27,17 @@
         flui = pkgs.callPackage ./package.nix { };
       });
 
+      # Formatter
+      formatter = forAllSystems (pkgs: pkgs.nixfmt-tree);
+
       # Home Manager Module
-      homeManagerModules.default = { config, lib, pkgs, ... }:
+      homeManagerModules.default =
+        {
+          config,
+          lib,
+          pkgs,
+          ...
+        }:
         let
           cfg = config.programs.flui;
         in
@@ -71,7 +85,13 @@
       homeManagerModules.flui = self.homeManagerModules.default;
 
       # NixOS Module (system-level enablement)
-      nixosModules.default = { config, lib, pkgs, ... }:
+      nixosModules.default =
+        {
+          config,
+          lib,
+          pkgs,
+          ...
+        }:
         let
           cfg = config.programs.flui;
         in

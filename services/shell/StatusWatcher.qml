@@ -103,6 +103,41 @@ Item {
                     statusHeight: 33
                 })
             }
+
+            else if (type === "microphone") {
+                MicrophoneService.muted = (value === 1)
+                MicrophoneService.update()
+
+                if (
+                    IslandState.mode === IslandState.controlCenterMode ||
+                    IslandState.mode === IslandState.expandedMode
+                )
+                    return
+
+                MicrophoneService.showOsd()
+            }
+
+            else if (type === "power-mode") {
+                var profile = parts[1]
+                var icon = "󰾅"
+                var title = "Balanced"
+
+                if (profile === "performance") {
+                    icon = "󰓅"
+                    title = "Performance"
+                } else if (profile === "low-power") {
+                    icon = "󰾆"
+                    title = "Power Saver"
+                }
+
+                StatusManager.show({
+                    mode: "power-mode",
+                    icon: icon,
+                    title: title,
+                    statusWidth: 280,
+                    statusHeight: 33
+                })
+            }
         }
     }
 }

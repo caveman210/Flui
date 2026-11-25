@@ -89,6 +89,14 @@ hl.bind("XF86AudioMute",
     hl.dsp.exec_cmd("~/.config/quickshell/scripts/volume.sh mute"),
     { locked = true })
 
+hl.bind("XF86AudioMicMute",
+    hl.dsp.exec_cmd("~/.config/quickshell/scripts/volume.sh mic-mute"),
+    { locked = true })
+
+hl.bind("XF86Favorites",
+    hl.dsp.exec_cmd("~/.config/quickshell/scripts/power-mode.sh"),
+    { locked = true })
+
 hl.bind("XF86MonBrightnessUp",
     hl.dsp.exec_cmd("~/.config/quickshell/scripts/brightness.sh +5%"),
     { locked = true, repeating = true })
