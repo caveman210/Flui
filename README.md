@@ -8,6 +8,32 @@ The project is built around one shared interface: the island changes shape and r
 
 > Flui is an actively developed personal desktop project. Its current compositor integrations target Hyprland and niri.
 
+## Screenshots
+
+### Layouts
+
+| Pill (Default) | Pill (Expanded) |
+|---|---|
+| ![Pill Default](assets/screenshots/pill_def.png) | ![Pill Expanded](assets/screenshots/pill_expanded.png) |
+
+| Notch (Default) | Notch (Expanded) |
+|---|---|
+| ![Notch Default](assets/screenshots/notch_def.png) | ![Notch Expanded](assets/screenshots/notch_expanded.png) |
+
+| Bar (Default) | Bar (Calendar Dropdown) |
+|---|---|
+| ![Bar Default](assets/screenshots/bar_def.png) | ![Bar Calendar](assets/screenshots/bar_cal.png) |
+
+### Panels & Extensibility
+
+| Control Center | Settings |
+|---|---|
+| ![Control Center](assets/screenshots/control_center.png) | ![Settings](assets/screenshots/settings.png) |
+
+**Plugins Manager**
+
+![Plugin Window](assets/screenshots/plugin_window.png)
+
 ## Highlights
 
 ### Three layouts
